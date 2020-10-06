@@ -76,7 +76,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
       $p->addRow()->context('contactId', $contactID);
     }
     $p->evaluate();
-
+    $groupContactDeleted = [];
     foreach ($p->getRows() as $row) {
       $contactID = $row->context['contactId'];
       $cms_name = $row->render('username');
@@ -152,12 +152,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
                 'group_id' => $setDefaults['cmsuser_group_history'],
               ]);
             }
-            // and then remove it from Group, so that on next iteration, same contact not get pulled
-            $result = civicrm_api3('GroupContact', 'delete', [
-              'contact_id' => $contactID,
-              'group_id' => $setDefaults['cmsuser_group_create'],
-              //'status' => 'Deleted',
-            ]);
+            $groupContactDeleted[] = $contactID;
           }
           else {
             // add contact to tag
@@ -179,6 +174,17 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
         catch (CiviCRM_API3_Exception $e) {
         }
       }
+    }
+
+    // remove contacts from Group, so that on next iteration, same contact not get pulled
+    // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
+    // one go.
+    if ($isGroup and !empty($groupContactDeleted)) {
+      $result = civicrm_api3('GroupContact', 'delete', [
+        'contact_id' => $groupContactDeleted,
+        'group_id' => $setDefaults['cmsuser_group_create'],
+        'skip_undelete' => TRUE,
+      ]);
     }
   }
 }

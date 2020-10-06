@@ -29,7 +29,7 @@
       <td class="label">{$form.cmsuser_group_create.label}</td>
       <td>
         {$form.cmsuser_group_create.html}
-        <div class="description">CMS user get created for contacts From this group, once username is created, contact get removed from this group.</div>
+        <div class="description">CMS user get created for contacts from this group, once username is created, same contact get removed from this group.</div>
       </td>
     </tr>
     <tr>
@@ -52,7 +52,7 @@
       <td class="label">{$form.cmsuser_tag_create.label}</td>
       <td>
         {$form.cmsuser_tag_create.html}
-        <div class="description">CMS user get created for contacts From this tag, once username is created, contact get removed from this tag.</div>
+        <div class="description">CMS user get created for contacts from this tag, once username is created, contact get removed from this tag.</div>
       </td>
     </tr>
     <tr>
