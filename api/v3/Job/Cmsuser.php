@@ -180,11 +180,14 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
     // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
     // one go.
     if ($isGroup and !empty($groupContactDeleted)) {
-      $result = civicrm_api3('GroupContact', 'delete', [
-        'contact_id' => $groupContactDeleted,
-        'group_id' => $setDefaults['cmsuser_group_create'],
-        'skip_undelete' => TRUE,
-      ]);
+      foreach ($groupContactDeleted as $contactId) {
+        // api does not accept multiple contacts, so iterating here.
+        $result = civicrm_api3('GroupContact', 'delete', [
+          'contact_id' => $contactId,
+          'group_id' => $setDefaults['cmsuser_group_create'],
+          'skip_undelete' => TRUE,
+        ]);
+      }
     }
   }
 }
