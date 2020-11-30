@@ -45,6 +45,15 @@ function civicrm_api3_job_Cmsuser($params) {
   if (!empty($setDefaults['cmsuser_tag_create'])) {
     _cms_user_create($setDefaults, FALSE);
   }
+
+  if (!empty($setDefaults['cmsuser_group_reset'])) {
+    //_cms_user_reset($setDefaults, TRUE);
+  }
+
+  if (!empty($setDefaults['cmsuser_tag_reset'])) {
+    //_cms_user_reset($setDefaults, FALSE);
+  }
+
   return civicrm_api3_create_success(1, $params);
 }
 
@@ -187,6 +196,118 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
           'group_id' => $setDefaults['cmsuser_group_create'],
           'skip_undelete' => TRUE,
         ]);
+      }
+    }
+  }
+}
+
+/**
+ * @param $setDefaults
+ * @param bool $isGroup
+ */
+function _cms_user_reset($setDefaults, $isGroup = TRUE) {
+  $domainID = CRM_Core_Config::domainID();
+  // check this call for group or tag
+  if ($isGroup) {
+    $contactX = _get_group_contact($setDefaults['cmsuser_group_reset']);
+  }
+  else {
+    $contactX = _get_tagged_contact($setDefaults['cmsuser_tag_reset']);
+  }
+
+  // if contact present, process it.
+  if (!empty($contactX)) {
+    $config = CRM_Core_Config::singleton();
+
+    if ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal') {
+      // Drupal 7
+      require_once DRUPAL_ROOT . '/modules/user/user.pages.inc';
+    }
+    elseif ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal8') {
+      // Drupal 8
+    }
+    else {
+      return;
+    }
+    $domainID = CRM_Core_Config::domainID();
+    $groupContactDeleted = [];
+    foreach ($contactX as $contactID) {
+      $api = NULL;
+      try {
+        // get drupal user id from uf match
+        $uf_id = civicrm_api3('UFMatch', 'getvalue', [
+          'contact_id' => $contactID,
+          'domain_id' => $domainID,
+          'return' => 'uf_id',
+        ]);
+        // no uf id found then do nothging...
+        if (empty($uf_id)) {
+          return;
+        }
+
+        if ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal') {
+          // for Drupal 7
+          $user = user_load($uf_id);
+          $form_state = [
+            'values' => [
+              'account' => $user,
+            ],
+          ];
+          user_pass_submit(NULL, $form_state);
+        }
+        elseif ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal8') {
+          // for Drupal 8
+          $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+          $account = \Drupal\user\Entity\User::load($uf_id);
+          $mail = _user_mail_notify('password_reset', $account, $langcode);
+        }
+
+        // all ok
+        $api = [
+          'is_error' => 0,
+        ];
+      }
+      catch (CiviCRM_API3_Exception $e) {
+        $api = [
+          'is_error' => 1,
+          'error_message' => $e->getMessage(),
+        ];
+      }
+
+      // if no error found then remove contact from Tag / Group
+      if (empty($api['is_error'])) {
+        try {
+          if ($isGroup) {
+            // for group , collect all contact ids then do at the end of the operation.
+            $groupContactDeleted[] = $contactID;
+          }
+          else {
+            // remove contact from Reset Tag, so that on next iteration, same contact not get pulled
+            $result = civicrm_api3('EntityTag', 'delete', [
+              'entity_table' => 'civicrm_contact',
+              'entity_id' => $contactID,
+              'tag_id' => $setDefaults['cmsuser_tag_reset'],
+            ]);
+          }
+        }
+
+        catch (CiviCRM_API3_Exception $e) {
+
+        }
+      }
+
+      // remove contacts from Group, so that on next iteration, same contact not get pulled
+      // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
+      // one go.
+      if ($isGroup and !empty($groupContactDeleted)) {
+        foreach ($groupContactDeleted as $contactId) {
+          // api does not accept multiple contacts, so iterating here.
+          $result = civicrm_api3('GroupContact', 'delete', [
+            'contact_id' => $contactId,
+            'group_id' => $setDefaults['cmsuser_group_reset'],
+            'skip_undelete' => TRUE,
+          ]);
+        }
       }
     }
   }
