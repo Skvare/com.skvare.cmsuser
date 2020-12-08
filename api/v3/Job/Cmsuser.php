@@ -105,6 +105,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
             $api = [
               'is_error' => 1,
               'error_message' => 'Contact is already connected to a CMS user account.',
+              'user_exist' => TRUE,
             ];
             break;
           }
@@ -120,6 +121,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
           $api = [
             'is_error' => 1,
             'error_message' => 'Contact was connected to an existing CMS user account.',
+            'user_exist' => TRUE,
           ];
         }
       }
@@ -149,9 +151,10 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
           ];
         }
       }
-      // if no error found then remove contact from Tag / Group and then add same contact to another Tag / Group to
+      // if no error found OR user is already exist then remove contact from Tag / Group then
+      // add same contact to another Tag / Group to
       // mainain history of contact , that are created using scheduled job
-      if (empty($api['is_error'])) {
+      if (empty($api['is_error']) || (!empty($api['is_error']) && !empty($api['user_exist']))) {
         try {
           if ($isGroup) {
             if ($setDefaults['cmsuser_group_history']) {
