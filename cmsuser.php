@@ -159,14 +159,46 @@ function cmsuser_civicrm_themes(&$themes) {
  *
  * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_navigationMenu
  */
-//function cmsuser_civicrm_navigationMenu(&$menu) {
-//  _cmsuser_civix_insert_navigation_menu($menu, 'Mailings', array(
-//    'label' => E::ts('New subliminal message'),
-//    'name' => 'mailing_subliminal_message',
-//    'url' => 'civicrm/mailing/subliminal',
-//    'permission' => 'access CiviMail',
-//    'operator' => 'OR',
-//    'separator' => 0,
-//  ));
-//  _cmsuser_civix_navigationMenu($menu);
-//}
+function cmsuser_civicrm_navigationMenu(&$menu) {
+  _cmsuser_civix_insert_navigation_menu($menu, 'Administer/System Settings', [
+    'label' => E::ts('CMS User Setting'),
+    'name' => 'cms_user_setting',
+    'url' => CRM_Utils_System::url('civicrm/admin/cmsuser', 'reset=1', TRUE),
+    'permission' => 'administer CiviCRM',
+    'operator' => 'OR',
+    'separator' => 0,
+  ]);
+  _cmsuser_civix_navigationMenu($menu);
+}
+
+
+function _cmsuser_activities() {
+  static $activities;
+
+  if (!$activities) {
+    $activities = [
+      'activity_creation' => civicrm_api3('OptionValue', 'getvalue', [
+        'option_group_id' => 'activity_type',
+        'name' => 'User Account Creation',
+        'return' => 'value',
+      ]),
+      'activity_password' => civicrm_api3('OptionValue', 'getvalue', [
+        'option_group_id' => 'activity_type',
+        'name' => 'User Account Password Reset',
+        'return' => 'value',
+      ]),
+      'activity_failed' => civicrm_api3('OptionValue', 'getvalue', [
+        'option_group_id' => 'activity_status',
+        'name' => 'Failed',
+        'return' => 'value',
+      ]),
+      'activity_completed' => civicrm_api3('OptionValue', 'getvalue', [
+        'option_group_id' => 'activity_status',
+        'name' => 'Completed',
+        'return' => 'value',
+      ]),
+    ];
+  }
+
+  return $activities;
+}

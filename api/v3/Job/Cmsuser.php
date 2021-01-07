@@ -70,7 +70,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
   else {
     $contactX = _get_tagged_contact($setDefaults['cmsuser_tag_create']);
   }
-
+  $activities = _cmsuser_activities();
   // if contact present, process it.
   if (!empty($contactX)) {
     // generate usernames
@@ -141,7 +141,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
             'return' => 'email',
           ]);
           // call our custom api to create user
-          CRM_Core_Error::debug_var('Cmsuser API  $createParams', $createParams);
+          //CRM_Core_Error::debug_var('Cmsuser API  $createParams', $createParams);
           $api = civicrm_api3('Cmsuser', 'Create', $createParams);
         }
         catch (CiviCRM_API3_Exception $e) {
@@ -186,6 +186,32 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
         catch (CiviCRM_API3_Exception $e) {
         }
       }
+
+      // create activity
+      $activityDetails = '';
+      if (empty($api['is_error'])) {
+        $activityStatus = $activities['activity_completed'];
+        $activitySubject = "Created : $cms_name ({$api['values']['uf_id']})";
+      }
+      else {
+        $activityStatus = $activities['activity_failed'];
+        $activitySubject = "Failed to create User $cms_name";
+        if (!empty($api['user_exist'])) {
+          $activitySubject .= " (user already exist)";
+        }
+        if (!empty($api['error_message'])) {
+          $activityDetails = $api['error_message'];
+        }
+      }
+      civicrm_api3('Activity', 'create', [
+        'source_record_id' => $contactID,
+        'target_contact_id' => $contactID,
+        'activity_type_id' => $activities['activity_creation'],
+        'status_id' => $activityStatus,
+        'subject' => $activitySubject,
+        'check_permissions' => 0,
+        'details' => $activityDetails,
+      ]);
     }
 
     // remove contacts from Group, so that on next iteration, same contact not get pulled
