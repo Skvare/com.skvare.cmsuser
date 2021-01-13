@@ -203,15 +203,20 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
           $activityDetails = $api['error_message'];
         }
       }
-      civicrm_api3('Activity', 'create', [
-        'source_record_id' => $contactID,
-        'target_contact_id' => $contactID,
-        'activity_type_id' => $activities['activity_creation'],
-        'status_id' => $activityStatus,
-        'subject' => $activitySubject,
-        'check_permissions' => 0,
-        'details' => $activityDetails,
-      ]);
+      try {
+        civicrm_api3('Activity', 'create', [
+          'source_record_id' => $contactID,
+          'target_contact_id' => $contactID,
+          'activity_type_id' => $activities['activity_creation'],
+          'status_id' => $activityStatus,
+          'subject' => $activitySubject,
+          'check_permissions' => 0,
+          'details' => $activityDetails,
+        ]);
+      }
+      catch (CiviCRM_API3_Exception $exception) {
+
+      }
     }
 
     // remove contacts from Group, so that on next iteration, same contact not get pulled
@@ -247,15 +252,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
   // if contact present, process it.
   if (!empty($contactX)) {
     $config = CRM_Core_Config::singleton();
-
-    if ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal') {
-      // Drupal 7
-      require_once DRUPAL_ROOT . '/modules/user/user.pages.inc';
-    }
-    elseif ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal8') {
-      // Drupal 8
-    }
-    else {
+    if (!$config->userSystem->is_drupal) {
       return;
     }
     $domainID = CRM_Core_Config::domainID();
@@ -271,30 +268,13 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
         ]);
         // no uf id found then do nothging...
         if (empty($uf_id)) {
-          return;
+          continue;
         }
 
-        if ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal') {
-          // for Drupal 7
-          $user = user_load($uf_id);
-          $form_state = [
-            'values' => [
-              'account' => $user,
-            ],
-          ];
-          user_pass_submit(NULL, $form_state);
-        }
-        elseif ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal8') {
-          // for Drupal 8
-          $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
-          $account = \Drupal\user\Entity\User::load($uf_id);
-          $mail = _user_mail_notify('password_reset', $account, $langcode);
-        }
-
-        // all ok
-        $api = [
-          'is_error' => 0,
-        ];
+        $resetParams = ['uf_id' => $uf_id];
+        // call our custom api to reset user
+        //CRM_Core_Error::debug_var('Cmsuser API  $resetParams', $resetParams);
+        $api = civicrm_api3('Cmsuser', 'Reset', $resetParams);
       }
       catch (CiviCRM_API3_Exception $e) {
         $api = [
@@ -323,6 +303,34 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
         catch (CiviCRM_API3_Exception $e) {
 
         }
+      }
+
+      // create activity
+      $activityDetails = '';
+      if (empty($api['is_error'])) {
+        $activityStatus = $activities['activity_completed'];
+        $activitySubject = "Password Reset email send to uid : ({$api['values']['uf_id']})";
+      }
+      else {
+        $activityStatus = $activities['activity_failed'];
+        $activitySubject = "Failed to send Password reset email to User uid : $uf_id";
+        if (!empty($api['error_message'])) {
+          $activityDetails = $api['error_message'];
+        }
+      }
+      try {
+        civicrm_api3('Activity', 'create', [
+          'source_record_id' => $contactID,
+          'target_contact_id' => $contactID,
+          'activity_type_id' => $activities['activity_password'],
+          'status_id' => $activityStatus,
+          'subject' => $activitySubject,
+          'check_permissions' => 0,
+          'details' => $activityDetails,
+        ]);
+      }
+      catch (CiviCRM_API3_Exception $exception) {
+
       }
 
       // remove contacts from Group, so that on next iteration, same contact not get pulled

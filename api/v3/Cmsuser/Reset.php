@@ -10,7 +10,7 @@ use CRM_Cmsuser_ExtensionUtil as E;
  * @see https://docs.civicrm.org/dev/en/latest/framework/api-architecture/
  */
 function _civicrm_api3_cmsuser_Reset_spec(&$spec) {
-  $spec['magicword']['api.required'] = 1;
+  $spec['uf_id']['api.required'] = 1;
 }
 
 /**
@@ -26,20 +26,35 @@ function _civicrm_api3_cmsuser_Reset_spec(&$spec) {
  * @throws API_Exception
  */
 function civicrm_api3_cmsuser_Reset($params) {
-  if (array_key_exists('magicword', $params) && $params['magicword'] == 'sesame') {
-    $returnValues = array(
-      // OK, return several data rows
-      12 => ['id' => 12, 'name' => 'Twelve'],
-      34 => ['id' => 34, 'name' => 'Thirty four'],
-      56 => ['id' => 56, 'name' => 'Fifty six'],
-    );
-    // ALTERNATIVE: $returnValues = []; // OK, success
-    // ALTERNATIVE: $returnValues = ["Some value"]; // OK, return a single value
+  civicrm_api3_verify_mandatory($params, NULL, ['uf_id']);
+  $config = CRM_Core_Config::singleton();
+  if ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal') {
+    require_once DRUPAL_ROOT . '/modules/user/user.pages.inc';
+    // for Drupal 7
+    global $language;
+    $account = user_load($params['uf_id']);
+    // Mail one time login URL and instructions using current language.
+    if (!empty($account)) {
+      $mail = _user_mail_notify('password_reset', $account, $language);
+    }
+    else {
+      return civicrm_api3_create_error('Failed to send reset email to CMS user account, user not exit', $params);
+    }
+  }
+  elseif ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal8') {
+    // for Drupal 8
+    $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $account = \Drupal\user\Entity\User::load($params['uf_id']);
+    if (!empty($account)) {
+      $mail = _user_mail_notify('password_reset', $account, $langcode);
+    }
+    else {
+      return civicrm_api3_create_error('Failed to send reset email to CMS user account, user not exit', $params);
+    }
+  }
+  if (!empty($mail)) {
+    return civicrm_api3_create_success(['uf_id' => $params['uf_id']], $params);
+  }
 
-    // Spec: civicrm_api3_create_success($values = 1, $params = [], $entity = NULL, $action = NULL)
-    return civicrm_api3_create_success($returnValues, $params, 'Cmsuser', 'Reset');
-  }
-  else {
-    throw new API_Exception(/*error_message*/ 'Everyone knows that the magicword is "sesame"', /*error_code*/ 'magicword_incorrect');
-  }
+  return civicrm_api3_create_error('Failed to send reset email to CMS user account', $params);
 }
