@@ -67,6 +67,18 @@ function civicrm_api3_cmsuser_Create($params) {
     $params['cms_pass'] = md5(print_r($_SERVER, TRUE));
   }
   $params['notify'] = empty($params['notify']) ? 0 : 1;
+
+  // changes for handling dedupe match
+  $result = civicrm_api3('Contact', 'getsingle', [
+    'id' => $params['contactID'],
+  ]);
+  if (!empty($_POST)) {
+    $_POST = array_merge($_POST, $result);
+  }
+  else {
+    $_POST = $result;
+  }
+
   if ($uf_id = CRM_Core_BAO_CMSUser::create($params, 'email')) {
     return civicrm_api3_create_success(['uf_id' => $uf_id], $params);
   }
