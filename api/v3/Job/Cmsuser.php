@@ -63,6 +63,7 @@ function civicrm_api3_job_Cmsuser($params) {
  */
 function _cms_user_create($setDefaults, $isGroup = TRUE) {
   $domainID = CRM_Core_Config::domainID();
+  $config = CRM_Core_Config::singleton();
   // check this call for group or tag
   if ($isGroup) {
     $contactX = _get_group_contact($setDefaults['cmsuser_group_create']);
@@ -140,9 +141,23 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
             'is_primary' => 1,
             'return' => 'email',
           ]);
-          // call our custom api to create user
-          //CRM_Core_Error::debug_var('Cmsuser API  $createParams', $createParams);
-          $api = civicrm_api3('Cmsuser', 'Create', $createParams);
+          $errors = [];
+          $check_params = [
+            'name' => $createParams['cms_name'],
+            'mail' => $createParams['email'],
+          ];
+          $config->userSystem->checkUserNameEmailExists($check_params, $errors);
+          if (empty($errors)) {
+            // call our custom api to create user
+            $api = civicrm_api3('Cmsuser', 'Create', $createParams);
+          }
+          else {
+            $api = [
+              'is_error' => 1,
+              'error_message' => print_r($errors, TRUE),
+              'email_already_taken' => TRUE,
+            ];
+          }
         }
         catch (CiviCRM_API3_Exception $e) {
           $api = [
@@ -213,6 +228,18 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
           'check_permissions' => 0,
           'details' => $activityDetails,
         ]);
+
+        if (!empty($api['is_error']) && !empty($api['email_already_taken'])) {
+          $result = civicrm_api3('Activity', 'getcount', [
+            'activity_type_id' => "User Account Creation",
+            'status_id' => "Failed",
+            'target_contact_id' => $contactID,
+          ]);
+          if ($result >= 4) {
+            $groupContactDeleted[] = $contactID;
+            CRM_Core_Error::debug_log_message("remove contact from group as it unable to create user in $result attempt.");
+          }
+        }
       }
       catch (CiviCRM_API3_Exception $exception) {
 
