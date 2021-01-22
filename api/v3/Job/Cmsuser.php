@@ -47,11 +47,11 @@ function civicrm_api3_job_Cmsuser($params) {
   }
 
   if (!empty($setDefaults['cmsuser_group_reset'])) {
-    //_cms_user_reset($setDefaults, TRUE);
+    _cms_user_reset($setDefaults, TRUE);
   }
 
   if (!empty($setDefaults['cmsuser_tag_reset'])) {
-    //_cms_user_reset($setDefaults, FALSE);
+    _cms_user_reset($setDefaults, FALSE);
   }
 
   return civicrm_api3_create_success(1, $params);
@@ -268,6 +268,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
  */
 function _cms_user_reset($setDefaults, $isGroup = TRUE) {
   $domainID = CRM_Core_Config::domainID();
+  $activities = _cmsuser_activities();
   // check this call for group or tag
   if ($isGroup) {
     $contactX = _get_group_contact($setDefaults['cmsuser_group_reset']);
@@ -309,7 +310,6 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
           'error_message' => $e->getMessage(),
         ];
       }
-
       // if no error found then remove contact from Tag / Group
       if (empty($api['is_error'])) {
         try {
