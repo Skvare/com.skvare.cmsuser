@@ -359,19 +359,18 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
       catch (CiviCRM_API3_Exception $exception) {
 
       }
-
-      // remove contacts from Group, so that on next iteration, same contact not get pulled
-      // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
-      // one go.
-      if ($isGroup and !empty($groupContactDeleted)) {
-        foreach ($groupContactDeleted as $contactId) {
-          // api does not accept multiple contacts, so iterating here.
-          $result = civicrm_api3('GroupContact', 'delete', [
-            'contact_id' => $contactId,
-            'group_id' => $setDefaults['cmsuser_group_reset'],
-            'skip_undelete' => TRUE,
-          ]);
-        }
+    }
+    // remove contacts from Group, so that on next iteration, same contact not get pulled
+    // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
+    // one go.
+    if ($isGroup and !empty($groupContactDeleted)) {
+      foreach ($groupContactDeleted as $contactId) {
+        // api does not accept multiple contacts, so iterating here.
+        $result = civicrm_api3('GroupContact', 'delete', [
+          'contact_id' => $contactId,
+          'group_id' => $setDefaults['cmsuser_group_reset'],
+          'skip_undelete' => TRUE,
+        ]);
       }
     }
   }
