@@ -202,3 +202,33 @@ function _cmsuser_activities() {
 
   return $activities;
 }
+
+/**
+ * Implementation of hook_civicrm_post
+ */
+function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
+  if ($op == 'create' && ($objectName == 'EntityTag' || $objectName == 'GroupContact')) {
+    // when contact is added to Tag or Group, it should  create user for it. then remove same contact from the group.
+    require_once 'api/v3/Job/Cmsuser.php';
+    $domainID = CRM_Core_Config::domainID();
+    $settings = Civi::settings($domainID);
+    $setDefaults = [];
+    $elementNames = ['cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
+      'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_create_immediately', 'cmsuser_cms_roles'];
+
+    // load setting for cms extension
+    foreach ($elementNames as $elementName) {
+      $setDefaults[$elementName] = $settings->get($elementName);
+    }
+    // if its not configured for create new user immediately then it will be processed using scheduled job.
+    if (!$setDefaults['cmsuser_create_immediately']) {
+      return;
+    }
+    if ($objectName == 'EntityTag' && $setDefaults['cmsuser_tag_create'] == $objectId) {
+      _cms_user_create($setDefaults, FALSE, $objectRef['0']);
+    }
+    elseif ($objectName == 'GroupContact' && $setDefaults['cmsuser_tag_create'] == $objectId) {
+      _cms_user_create($setDefaults, TRUE, $objectRef);
+    }
+  }
+}

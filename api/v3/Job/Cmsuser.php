@@ -31,7 +31,7 @@ function civicrm_api3_job_Cmsuser($params) {
   $setDefaults = [];
   $elementNames = [
     'cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
-    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset'
+    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles'
   ];
 
   foreach ($elementNames as $elementName) {
@@ -60,16 +60,22 @@ function civicrm_api3_job_Cmsuser($params) {
 /**
  * @param $setDefaults
  * @param bool $isGroup
+ * @param array $createImmediately list of contact ids
  */
-function _cms_user_create($setDefaults, $isGroup = TRUE) {
+function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []) {
   $domainID = CRM_Core_Config::domainID();
   $config = CRM_Core_Config::singleton();
   // check this call for group or tag
-  if ($isGroup) {
-    $contactX = _get_group_contact($setDefaults['cmsuser_group_create']);
+  if (!empty($createImmediately)) {
+    $contactX = $createImmediately;
   }
   else {
-    $contactX = _get_tagged_contact($setDefaults['cmsuser_tag_create']);
+    if ($isGroup) {
+      $contactX = _get_group_contact($setDefaults['cmsuser_group_create']);
+    }
+    else {
+      $contactX = _get_tagged_contact($setDefaults['cmsuser_tag_create']);
+    }
   }
   $activities = _cmsuser_activities();
   // if contact present, process it.
@@ -150,6 +156,15 @@ function _cms_user_create($setDefaults, $isGroup = TRUE) {
           if (empty($errors)) {
             // call our custom api to create user
             $api = civicrm_api3('Cmsuser', 'Create', $createParams);
+            if (empty($api['is_error']) && !empty($setDefaults['cmsuser_cms_roles'])) {
+              if ($api['values']['uf_id']) {
+                $account = \Drupal\user\Entity\User::load($api['values']['uf_id']);
+                foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+                  $account->addRole($role);
+                }
+                $account->save();
+              }
+            }
           }
           else {
             $api = [

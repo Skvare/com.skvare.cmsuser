@@ -25,6 +25,23 @@
         <div class="description">Whether an email should be sent to the user to notify them of account creation?.</div>
       </td>
     </tr>
+    {if $form.cmsuser_cms_roles.html}
+    <tr>
+      <td class="label">{$form.cmsuser_cms_roles.label}</td>
+      <td>
+          {$form.cmsuser_cms_roles.html}<br/>
+        <div class="description">Assign Roles to newly created user.</div>
+      </td>
+    </tr>
+    {/if}
+    <tr>
+      <td class="label">{$form.cmsuser_create_immediately.label}</td>
+      <td>
+          {$form.cmsuser_create_immediately.html}<br/><br/>
+        <div class="description">Create CMS user immediately when contact get added to Group Or Tag. Example Add
+          Contact to Any Tag through Webform configuration.</div>
+      </td>
+    </tr>
     <tr>
       <td class="label">{$form.cmsuser_group_create.label}</td>
       <td>

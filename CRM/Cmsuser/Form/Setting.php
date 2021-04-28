@@ -14,6 +14,12 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
 
     $this->add('text', 'cmsuser_pattern', 'Username pattern', ['size' => 60], TRUE);
     $this->addElement('checkbox', 'cmsuser_notify', ts('Notify User?'));
+    $this->addElement('checkbox', 'cmsuser_create_immediately', ts('Create New User Immediately?'));
+    if (CIVICRM_UF == 'Drupal8') {
+      $user_role_names = user_role_names();
+      $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
+        $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
+    }
     $groups = ['' => '-- select --'] + CRM_Core_PseudoConstant::nestedGroup();
     $tags = ['' => '-- select --'] + CRM_Core_PseudoConstant::get('CRM_Core_DAO_EntityTag', 'tag_id', ['onlyActive' => FALSE]);
 
