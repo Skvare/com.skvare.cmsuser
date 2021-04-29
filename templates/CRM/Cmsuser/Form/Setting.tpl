@@ -43,6 +43,18 @@
       </td>
     </tr>
     <tr>
+      <td class="label">{$form.cmsuser_user_fields.label}</td>
+      <td>
+          {$form.cmsuser_user_fields.html}<br/><br/>
+        <div class="description">Map Drupal user fields with CiviCRM field. Add new line after each entry.<br/>
+          Example
+          <br/>
+          field_first_name={ldelim}contact.first_name{rdelim}<br/>
+          field_last_name={ldelim}contact.last_name{rdelim}</div>
+        {$fieldHtml}
+      </td>
+    </tr>
+    <tr>
       <td class="label">{$form.cmsuser_group_create.label}</td>
       <td>
         {$form.cmsuser_group_create.html}

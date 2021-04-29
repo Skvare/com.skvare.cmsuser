@@ -214,7 +214,8 @@ function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     $settings = Civi::settings($domainID);
     $setDefaults = [];
     $elementNames = ['cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
-      'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_create_immediately', 'cmsuser_cms_roles'];
+      'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_create_immediately', 'cmsuser_cms_roles',
+      'cmsuser_user_fields'];
 
     // load setting for cms extension
     foreach ($elementNames as $elementName) {

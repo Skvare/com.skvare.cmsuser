@@ -19,6 +19,32 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $user_role_names = user_role_names();
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
+
+      $userFields = \Drupal::service('entity_field.manager')->getFieldDefinitions('user', 'user');
+      $fieldHtml = '<table><tr><th>Label</th><th>Field Name</th><th>Is Required</th></tr>';
+      foreach ($userFields as $fieldName => $fieldObject) {
+        if (get_class($fieldObject) == 'Drupal\field\Entity\FieldConfig') {
+          $isRequired = $fieldObject->isRequired() ? '<strong>True</strong>' : 'False';
+          if ($fieldObject->getType() == 'address') {
+            $field_overrides = $fieldObject->getSetting('field_overrides');
+            foreach ($field_overrides as $field_overrideName => $field_override) {
+              $field_overrideName = $this->fromCamelCase($field_overrideName);
+              $isRequiredOverRide = 'False';
+              if ($field_override['override'] == 'required') {
+                $isRequiredOverRide = '<strong>True</strong>';
+              }
+              $fieldNameOverRide = $fieldName . '[0][' . $field_overrideName . ']';
+              $fieldHtml .= '<tr><td>' . $fieldObject->getLabel() . '</td><td>' . $fieldNameOverRide . '</td><td>' . $isRequiredOverRide . '</td></tr>';
+            }
+          }
+          else {
+            $fieldHtml .= '<tr><td>' . $fieldObject->getLabel() . '</td><td>' . $fieldName . '</td><td>' . $isRequired . '</td></tr>';
+          }
+        }
+      }
+      $fieldHtml .= "</table>";
+      $this->assign('fieldHtml', $fieldHtml);
+      $this->addElement('textarea', 'cmsuser_user_fields', ts('Drupal User Fields'), ['rows' => 5, 'cols' => 50]);
     }
     $groups = ['' => '-- select --'] + CRM_Core_PseudoConstant::nestedGroup();
     $tags = ['' => '-- select --'] + CRM_Core_PseudoConstant::get('CRM_Core_DAO_EntityTag', 'tag_id', ['onlyActive' => FALSE]);
@@ -91,6 +117,19 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
     }
 
     return $elementNames;
+  }
+
+  /**
+   * @param $input
+   * @return string
+   */
+  function fromCamelCase($input) {
+    preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $input, $matches);
+    $ret = $matches[0];
+    foreach ($ret as &$match) {
+      $match = $match == strtoupper($match) ? strtolower($match) : lcfirst($match);
+    }
+    return implode('_', $ret);
   }
 
 }

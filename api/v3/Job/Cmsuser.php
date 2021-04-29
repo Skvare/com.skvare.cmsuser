@@ -31,7 +31,7 @@ function civicrm_api3_job_Cmsuser($params) {
   $setDefaults = [];
   $elementNames = [
     'cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
-    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles'
+    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles', 'cmsuser_user_fields'
   ];
 
   foreach ($elementNames as $elementName) {
@@ -88,6 +88,10 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
     ]);
     $p->addMessage('username', $pattern, 'text/plain');
 
+    if (!empty($setDefaults['cmsuser_user_fields'])) {
+      $p->addMessage('fieldsmapping', $setDefaults['cmsuser_user_fields'], 'text/plain');
+    }
+
     foreach ($contactX as $contactID) {
       $p->addRow()->context('contactId', $contactID);
     }
@@ -96,6 +100,21 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
     foreach ($p->getRows() as $row) {
       $contactID = $row->context['contactId'];
       $cms_name = $row->render('username');
+      $additionalFields = [];
+      $fieldsMapping = $row->render('fieldsmapping');
+
+      if (!empty($fieldsMapping)) {
+        // convert new line into array
+        $fieldsMapping = explode("\n", $fieldsMapping);
+        // trim all values
+        $fieldsMapping = array_map('trim', $fieldsMapping);
+        // remove any empty value
+        $fieldsMapping = array_filter($fieldsMapping);
+        // conver into url param format
+        $fieldsMapping2 = implode("&", $fieldsMapping);
+        // create key value array
+        $additionalFields = help_parse_qs($fieldsMapping2);
+      }
       $api = NULL;
 
       // don't bother attempting to create user account
@@ -141,6 +160,9 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
             'contactID' => $contactID,
             'notify' => $setDefaults['cmsuser_notify'],
           ];
+          if (!empty($additionalFields)) {
+            $createParams['custom_fields'] = $additionalFields;
+          }
           // get primary email of civicrm contact
           $createParams['email'] = civicrm_api3('Email', 'getvalue', [
             'contact_id' => $contactID,
@@ -430,4 +452,18 @@ function _get_group_contact($group_id) {
     $groupContacts[] = $entity['contact_id'];
   }
   return $groupContacts;
+}
+
+/**
+ * @param $data
+ * @return array
+ */
+function help_parse_qs($data) {
+  $data = preg_replace_callback('/(?:^|(?<=&))[^=[]+/', function ($match) {
+    return bin2hex(urldecode($match[0]));
+  }, $data);
+
+  parse_str($data, $values);
+
+  return array_combine(array_map('hex2bin', array_keys($values)), $values);
 }
