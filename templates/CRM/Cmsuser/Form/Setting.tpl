@@ -42,6 +42,7 @@
           Contact to Any Tag through Webform configuration.</div>
       </td>
     </tr>
+    {if $form.cmsuser_user_fields.html}
     <tr>
       <td class="label">{$form.cmsuser_user_fields.label}</td>
       <td>
@@ -54,6 +55,7 @@
         {$fieldHtml}
       </td>
     </tr>
+    {/if}
     <tr>
       <td class="label">{$form.cmsuser_group_create.label}</td>
       <td>

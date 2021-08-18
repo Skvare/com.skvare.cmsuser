@@ -46,6 +46,24 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $this->assign('fieldHtml', $fieldHtml);
       $this->addElement('textarea', 'cmsuser_user_fields', ts('Drupal User Fields'), ['rows' => 5, 'cols' => 50]);
     }
+    elseif (CIVICRM_UF == 'Drupal') {
+      $entity_type = 'user';
+      $bundle_name = NULL;
+      $fields_info = field_info_instances($entity_type, $bundle_name);
+      $user_role_names = user_roles(TRUE);
+      $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
+        $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
+
+      $fieldHtml = '<table><tr><th>Label</th><th>Field Name</th><th>Is Required</th></tr>';
+      foreach ($fields_info['user'] as $fieldName => $fieldDetails) {
+        $isRequired = !empty($fieldDetails['required']) ? '<strong>True</strong>' : 'False';
+        $fieldHtml .= '<tr><td>' . $fieldDetails['label'] . '</td><td>' . $fieldName . '</td><td>' . $isRequired . '</td></tr>';
+      }
+      $fieldHtml .= "</table>";
+      $this->assign('fieldHtml', $fieldHtml);
+      $this->addElement('textarea', 'cmsuser_user_fields', ts('Drupal User Fields'), ['rows' => 5, 'cols' => 50]);
+    }
+
     $groups = ['' => '-- select --'] + CRM_Core_PseudoConstant::nestedGroup();
     $tags = ['' => '-- select --'] + CRM_Core_PseudoConstant::get('CRM_Core_DAO_EntityTag', 'tag_id', ['onlyActive' => FALSE]);
 

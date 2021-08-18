@@ -180,11 +180,27 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
             $api = civicrm_api3('Cmsuser', 'Create', $createParams);
             if (empty($api['is_error']) && !empty($setDefaults['cmsuser_cms_roles'])) {
               if ($api['values']['uf_id']) {
-                $account = \Drupal\user\Entity\User::load($api['values']['uf_id']);
-                foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
-                  $account->addRole($role);
+                if (CIVICRM_UF == 'Drupal8') {
+                  $account = \Drupal\user\Entity\User::load($api['values']['uf_id']);
+                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+                    $account->addRole($role);
+                  }
+                  $account->save();
                 }
-                $account->save();
+                elseif (CIVICRM_UF == 'Drupal') {
+                  $allRoles = user_roles(TRUE);
+                  $roles = [];
+                  $account = user_load((int)$api['values']['uf_id'], TRUE);
+                  // Skip adding the role to the user if they already have it.
+                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+                    if ($account !== FALSE && !isset($account->roles[$role])) {
+                      $roles = $account->roles + [$role => $allRoles[$role]];
+                    }
+                  }
+                  if (!empty($roles)) {
+                    user_save($account, ['roles' => $roles]);
+                  }
+                }
               }
             }
           }
