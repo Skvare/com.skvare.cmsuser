@@ -79,7 +79,7 @@ function civicrm_api3_cmsuser_Create($params) {
     $_POST = $result;
   }
 
-  if ($uf_id = CRM_Core_BAO_CMSUser::create($params, 'email')) {
+  if ($uf_id = CRM_Cmsuser_Utils::create($params, 'email')) {
     return civicrm_api3_create_success(['uf_id' => $uf_id], $params);
   }
 

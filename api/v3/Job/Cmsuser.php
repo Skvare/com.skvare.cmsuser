@@ -289,8 +289,19 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
             'target_contact_id' => $contactID,
           ]);
           if ($result >= 4) {
-            $groupContactDeleted[] = $contactID;
-            CRM_Core_Error::debug_log_message("remove contact from group as it unable to create user in $result attempt.");
+            if ($isGroup) {
+              $groupContactDeleted[] = $contactID;
+              CRM_Core_Error::debug_log_message("remove contact from group as it unable to create user in $result attempt.");
+            }
+            else {
+              // and then remove it from Tag, so that on next iteration, same contact not get pulled
+              civicrm_api3('EntityTag', 'delete', [
+                'entity_table' => 'civicrm_contact',
+                'entity_id' => $contactID,
+                'tag_id' => $setDefaults['cmsuser_tag_create'],
+              ]);
+              CRM_Core_Error::debug_log_message("remove contact from tag as it unable to create user in $result attempt.");
+            }
           }
         }
       }

@@ -228,7 +228,7 @@ function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     if ($objectName == 'EntityTag' && $setDefaults['cmsuser_tag_create'] == $objectId) {
       _cms_user_create($setDefaults, FALSE, $objectRef['0']);
     }
-    elseif ($objectName == 'GroupContact' && $setDefaults['cmsuser_tag_create'] == $objectId) {
+    elseif ($objectName == 'GroupContact' && $setDefaults['cmsuser_group_create'] == $objectId) {
       _cms_user_create($setDefaults, TRUE, $objectRef);
     }
   }
