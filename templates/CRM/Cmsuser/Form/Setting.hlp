@@ -4,14 +4,13 @@
 
 {htxt id="id-cmsuser_create_immediately"}
     <p>{ts}If this setting is enabled then the CMS user is immediately created when contact gets added to Group Or Tag. Example Add Contact to Any Tag through Webform configuration or through CiviCRM UI.{/ts}</p>
-<p>{ts}If this is not enabled then the CiviCRM scheduled job has to be configured which will get executed on a set interval. This job will process set Group and Tag and create users for these contacts present in it. There after Contact get removed from Group and Tag.{/ts}</p>
+<p>{ts}If this is not enabled then the CiviCRM scheduled job has to be configured which will get executed on a set interval. This job will process set Group and Tag and create users for these contacts present in it. Thereafter Contact gets removed from Group and Tag.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_user_fields"}
-    <p>{ts}Some times CMS have additional custom fields which are set to required while creating a user. By default CiviCRM just passes username, email and password details to drupal. But this not sufficient, this section pull up the custom field from drupal users field configuration and list here.{/ts}</p>
-<p>{ts}We need to pass values from CiviCRM so that user creation not get failed.{/ts}</p>
-    <p>Map Drupal user fields with CiviCRM field. Add new
-    line after each entry.<br/>
+    <p>{ts}Sometimes CMS have additional custom fields which are set to required while creating a user. By default CiviCRM just passes username, email and password details to drupal. But this is not sufficient, this section pulls up the custom field from drupal users field configuration and list here.{/ts}</p>
+	<p>{ts}We need to pass values from CiviCRM so that user creation does not get failed.{/ts}</p>
+    <p>Map Drupal user fields with CiviCRM field. Add a new line after each entry.<br/>
         Example
         <br/>
         field_first_name={ldelim}contact.first_name{rdelim}<br/>
@@ -19,7 +18,7 @@
 {/htxt}
 
 {htxt id="id-cmsuser_group_create"}
-    <p>{ts}CMS user get created for contacts from this group, once user is created, same contact get removed from this group to avoid calling user create functionality again.{/ts}</p>
+    <p>{ts}CMS users get created for contacts from this group, once a user is created, the same contact gets removed from this group to avoid calling user create functionality again.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_group_history"}
@@ -27,21 +26,21 @@
 {/htxt}
 
 {htxt id="id-cmsuser_group_reset"}
-    <p>{ts}Any Contact present in this group, their CMS user password gets reseted, then contact gets removed after reset. Reset action does send email to reset their  password. This is useful if users are migrated from different system.{/ts}</p>
+    <p>{ts}Any Contact present in this group, their CMS user password gets reseted, then contact gets removed after reset. Reset action does send email to reset their  password. This is useful if users are migrated from different systems.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_tag_create"}
-    <p>{ts}CMS user get created for contacts from this tag, once user is created, same contact get removed from this tag to avoid calling user create functionality again.{/ts}</p>
+    <p>{ts}CMS users get created for contacts from this tag, once a user is created, the same contact gets removed from this tag to avoid calling user create functionality again.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_tag_history"}
-    <p>{ts}Newly created CMS user for contacts from above tag, get assigned to this tag to keep history of contact created using Tag. We also create Activity on user creation.{/ts}</p>
+    <p>{ts}Newly created CMS users for contacts from above tag, get assigned to this tag to keep history of contact created using Tag. We also create Activity on user creation.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_tag_reset"}
-    <p>{ts}Any Contact present in this tag, their CMS user password gets reseted, then contact gets removed after reset. Reset action does send email to reset their  password. This is useful if users are migrated from different system.{/ts}</p>
+    <p>{ts}Any Contact present in this tag, their CMS user password gets reseted, then contact gets removed after reset. Reset action does send email to reset their  password. This is useful if users are migrated from different systems.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_notify"}
-    <p>{ts}If this setting is enabled an email should be sent to the user to notify them of account creation and then can reset their password. Mail is send by CMS  itself, check mailing template for 'new user' under CMS User Account configuration section.{/ts}</p>
+    <p>{ts}If this setting is enabled an email should be sent to the user to notify them of account creation and then can reset their password. Mail is sent by CMS  itself, check mailing template for 'new user' under CMS User Account configuration section.{/ts}</p>
 {/htxt}

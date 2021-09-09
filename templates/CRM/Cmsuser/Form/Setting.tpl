@@ -27,7 +27,7 @@
       <td class="label">{$form.cmsuser_cms_roles.label}</td>
       <td>
           {$form.cmsuser_cms_roles.html}<br/>
-        <div class="description">Assign Roles to newly created user.</div>
+        <div class="description">Assign Roles to newly created users.</div>
       </td>
     </tr>
     {/if}
@@ -44,7 +44,7 @@
       <td>
           {$form.cmsuser_user_fields.html} {help id="id-cmsuser_user_fields"}
           <br/><br/>
-        {ts}List of Custom Fields availabe to users.{/ts}
+        {ts}List of Custom Fields available to users.{/ts}
         {$fieldHtml}
         <br/><br/><br/>
       </td>
