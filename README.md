@@ -2,7 +2,7 @@
 
 ![Screenshot](/images/screenshot.png)
 
-Extension to Create CMS user for Contacts from either Group or Tag, this functionality run using Scheduled Job.
+Extension to Create CMS user for Contacts from either Group or Tag, this functionality runs using Scheduled Job.
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
