@@ -205,6 +205,12 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
                     user_save($account, ['roles' => $roles]);
                   }
                 }
+                elseif (CIVICRM_UF == 'WordPress') {
+                  if (!empty($setDefaults['cmsuser_cms_roles'])) {
+                    $user = new WP_User($api['values']['uf_id']);
+                    $user->set_role($setDefaults['cmsuser_cms_roles']);
+                  }
+                }
               }
             }
           }

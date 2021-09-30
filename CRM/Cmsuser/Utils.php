@@ -27,6 +27,9 @@ class CRM_Cmsuser_Utils {
     elseif (CIVICRM_UF == 'Drupal') {
       $ufID = self::create_d7($params, $mail);
     }
+    elseif (CIVICRM_UF == 'WordPress') {
+      $ufID = self::create_wordpress($params, $mail);
+    }
 
     //if contact doesn't already exist create UF Match
     if ($ufID !== FALSE && isset($params['contactID'])) {
@@ -45,6 +48,7 @@ class CRM_Cmsuser_Utils {
    *
    * @param $params
    * @param $mail
+   *
    * @return mixed
    */
   public static function create_d8(&$params, $mail) {
@@ -96,8 +100,7 @@ class CRM_Cmsuser_Utils {
 
       return FALSE;
     }
-
-    switch (TRUE) {
+    switch ($params['notify']) {
       case $user_register_conf == 'admin_only' || $user->isAuthenticated():
         _user_mail_notify('register_admin_created', $account);
         break;
@@ -118,6 +121,7 @@ class CRM_Cmsuser_Utils {
    * Function to create user for Drupal 7
    * @param $params
    * @param $mail
+   *
    * @return bool
    */
   public static function create_d7(&$params, $mail) {
@@ -173,6 +177,64 @@ class CRM_Cmsuser_Utils {
     return $form_state['user']->uid;
   }
 
+  /**
+   * Function to create user for WordPress.
+   * @param $params
+   * @param $mail
+   *
+   * @return bool
+   */
+  public static function create_wordpress(&$params, $mail) {
+    $user_data = [
+      'ID' => '',
+      'user_login' => $params['cms_name'],
+      'user_email' => $params[$mail],
+      'nickname' => $params['cms_name'],
+      'role' => get_option('default_role'),
+    ];
+
+    // If there's a password add it, otherwise generate one.
+    if (!empty($params['cms_pass'])) {
+      $user_data['user_pass'] = $params['cms_pass'];
+    }
+    else {
+      $user_data['user_pass'] = wp_generate_password(12, FALSE);;
+    }
+
+    // Assign WordPress User "name" field(s).
+    if (isset($params['contactID'])) {
+      $contactType = CRM_Contact_BAO_Contact::getContactType($params['contactID']);
+      if ($contactType == 'Individual') {
+        $user_data['first_name'] = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact',
+          $params['contactID'], 'first_name'
+        );
+        $user_data['last_name'] = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact',
+          $params['contactID'], 'last_name'
+        );
+      }
+      if ($contactType == 'Organization') {
+        $user_data['first_name'] = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact',
+          $params['contactID'], 'organization_name'
+        );
+      }
+      if ($contactType == 'Household') {
+        $user_data['first_name'] = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact',
+          $params['contactID'], 'household_name'
+        );
+      }
+    }
+
+    // Now go ahead and create a WordPress User.
+    $uid = wp_insert_user($user_data);
+
+    if (!empty($params['notify'])) {
+      // Fire the new user action. Sends notification email by default.
+      do_action('register_new_user', $uid);
+    }
+
+    return $uid;
+  }
+
 
   /**
    * Function to auto login user.
@@ -194,6 +256,14 @@ class CRM_Cmsuser_Utils {
       $user = user_load($cmsUserID);
       $formState['uid'] = $user->uid;
       user_login_finalize($formState);
+    }
+    elseif (CIVICRM_UF == 'WordPress') {
+      $user = new WP_User($cmsUserID);
+      if (!is_wp_error($user)) {
+        wp_clear_auth_cookie();
+        wp_set_current_user($user->ID);
+        wp_set_auth_cookie($user->ID);
+      }
     }
   }
 

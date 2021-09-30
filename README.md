@@ -1,8 +1,12 @@
 # com.skvare.cmsuser
 
-![Screenshot](/images/screenshot.png)
+![Screenshot](/images/screenshot_1.png)
 
-Extension to Create CMS user for Contacts from either Group or Tag, this functionality runs using Scheduled Job.
+Extension to Create CMS user for Contacts from either Group or Tag, this 
+functionality runs using Scheduled Job or Immediately using hook when contact
+is added to either group or tag.  It's totally based on how you configured 
+the setting form.
+
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
@@ -10,6 +14,9 @@ The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 * PHP v7.0+
 * CiviCRM (5.0)
+
+#Note 
+Currently it only works with Drupal and WordPress only.
 
 ## Installation (Web UI)
 
@@ -34,4 +41,23 @@ install it with the command-line tool [cv](https://github.com/civicrm/cv).
 git clone https://github.com/Skvare/com.skvare.cmsuser.git
 cv en cmsuser
 ```
+
+## Usage
+* `Administer CiviCRM` -> `CMS User Setting` (`/civicrm/admin/cmsuser`)
+* Configure the Setting form.
+     > Click on Help icon for more additional information of each field.
+
+* You can configure this extension for 2 way users.
+    * Creating Immediate users through a post hook when any contact gets added to 
+either Group or Tag.
+
+    * And using Scheduled Jobs, which fetch the contact from Group and/or Tag, and 
+create a user for each contact.
+
+* Due to any reason the user is not created then we add an Activity record of type 
+`User Account Creation` with `Failed` status. We retry upto 4 attempt, there 
+after Contact gets removed from the Group/Tag itself without creating a user account.
+
+* If a user is created successfully then a new activity of type `User Account 
+Creation` is created with `Completed` Status.
 

@@ -63,6 +63,12 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $this->assign('fieldHtml', $fieldHtml);
       $this->addElement('textarea', 'cmsuser_user_fields', ts('Drupal User Fields'), ['rows' => 5, 'cols' => 50]);
     }
+    elseif (CIVICRM_UF == 'WordPress') {
+      global $wp_roles;
+      $user_role_names = ['' => '-select-'] + $wp_roles->get_names();
+      $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
+        $user_role_names, FALSE, ['class' => 'crm-select2 huge']);
+    }
 
     $groups = ['' => '-- select --'] + CRM_Core_PseudoConstant::nestedGroup();
     $tags = ['' => '-- select --'] + CRM_Core_PseudoConstant::get('CRM_Core_DAO_EntityTag', 'tag_id', ['onlyActive' => FALSE]);
