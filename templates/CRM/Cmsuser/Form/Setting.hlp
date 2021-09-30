@@ -45,3 +45,7 @@
 {htxt id="id-cmsuser_notify"}
     <p>{ts}If this setting is enabled an email should be sent to the user to notify them of account creation and then can reset their password. Mail is send by CMS  itself, check mailing template for 'new user' under CMS User Account configuration section.{/ts}</p>
 {/htxt}
+
+{htxt id="id-cmsuser_login_immediately"}
+    <p>{ts}If this setting is enabled along with 'Create New User Immediately' then users get created and also get auto logged in.{/ts}</p>
+{/htxt}

@@ -143,17 +143,6 @@ function cmsuser_civicrm_themes(&$themes) {
   _cmsuser_civix_civicrm_themes($themes);
 }
 
-// --- Functions below this ship commented out. Uncomment as required. ---
-
-/**
- * Implements hook_civicrm_preProcess().
- *
- * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_preProcess
- */
-//function cmsuser_civicrm_preProcess($formName, &$form) {
-//
-//}
-
 /**
  * Implements hook_civicrm_navigationMenu().
  *
@@ -208,6 +197,7 @@ function _cmsuser_activities() {
  */
 function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
   if ($op == 'create' && ($objectName == 'EntityTag' || $objectName == 'GroupContact')) {
+
     // when contact is added to Tag or Group, it should  create user for it. then remove same contact from the group.
     require_once 'api/v3/Job/Cmsuser.php';
     $domainID = CRM_Core_Config::domainID();
@@ -215,21 +205,27 @@ function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     $setDefaults = [];
     $elementNames = ['cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
       'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_create_immediately', 'cmsuser_cms_roles',
-      'cmsuser_user_fields'];
+      'cmsuser_user_fields', 'cmsuser_login_immediately'];
 
     // load setting for cms extension
     foreach ($elementNames as $elementName) {
       $setDefaults[$elementName] = $settings->get($elementName);
     }
+
     // if its not configured for create new user immediately then it will be processed using scheduled job.
     if (!$setDefaults['cmsuser_create_immediately']) {
       return;
     }
     if ($objectName == 'EntityTag' && $setDefaults['cmsuser_tag_create'] == $objectId) {
-      _cms_user_create($setDefaults, FALSE, $objectRef['0']);
+      $cmsUserID = _cms_user_create($setDefaults, FALSE, $objectRef['0'], TRUE);
     }
     elseif ($objectName == 'GroupContact' && $setDefaults['cmsuser_group_create'] == $objectId) {
-      _cms_user_create($setDefaults, TRUE, $objectRef);
+      $cmsUserID = _cms_user_create($setDefaults, TRUE, $objectRef, TRUE);
+    }
+
+    if (!empty($setDefaults['cmsuser_login_immediately']) &&
+      isset($cmsUserID) && !empty($cmsUserID)) {
+      CRM_Cmsuser_Utils::autoLogin($cmsUserID);
     }
   }
 }

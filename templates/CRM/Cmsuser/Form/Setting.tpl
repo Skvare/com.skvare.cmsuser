@@ -12,14 +12,14 @@
     <tr>
       <td class="label">{$form.cmsuser_pattern.label}</td>
       <td>
-        {$form.cmsuser_pattern.html} {help id="id-cmsuser_pattern"}
+        {$form.cmsuser_pattern.html} {help id="id-cmsuser_pattern" title=$form.cmsuser_pattern.label}
         <div class="description">Pattern for username selection. All CiviCRM tokens are supported.</div>
       </td>
     </tr>
     <tr>
       <td class="label">{$form.cmsuser_notify.label}</td>
       <td>
-        {$form.cmsuser_notify.html} {help id="id-cmsuser_notify"}
+        {$form.cmsuser_notify.html} {help id="id-cmsuser_notify" title=$form.cmsuser_notify.label}
       </td>
     </tr>
     {if $form.cmsuser_cms_roles.html}
@@ -34,7 +34,14 @@
     <tr>
       <td class="label">{$form.cmsuser_create_immediately.label}</td>
       <td>
-          {$form.cmsuser_create_immediately.html} {help id="id-cmsuser_create_immediately"}<br/>
+          {$form.cmsuser_create_immediately.html} {help id="id-cmsuser_create_immediately" title=$form.cmsuser_create_immediately.label}<br/>
+        <div class="description"></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="label">{$form.cmsuser_login_immediately.label}</td>
+      <td>
+          {$form.cmsuser_login_immediately.html} {help id="id-cmsuser_login_immediately" title=$form.cmsuser_login_immediately.label}<br/>
         <div class="description"></div>
       </td>
     </tr>
@@ -42,7 +49,7 @@
     <tr>
       <td class="label">{$form.cmsuser_user_fields.label}</td>
       <td>
-          {$form.cmsuser_user_fields.html} {help id="id-cmsuser_user_fields"}
+          {$form.cmsuser_user_fields.html} {help id="id-cmsuser_user_fields" title=$form.cmsuser_user_fields.label}
           <br/><br/>
         {ts}List of Custom Fields availabe to users.{/ts}
         {$fieldHtml}
@@ -58,20 +65,20 @@
     <tr>
       <td class="label">{$form.cmsuser_group_create.label}</td>
       <td>
-        {$form.cmsuser_group_create.html} {help id="id-cmsuser_group_create"}
+        {$form.cmsuser_group_create.html} {help id="id-cmsuser_group_create" title=$form.cmsuser_group_create.label}
       </td>
     </tr>
     <tr>
       <td class="label">{$form.cmsuser_group_history.label}</td>
       <td>
-        {$form.cmsuser_group_history.html} {help id="id-cmsuser_group_history"}
+        {$form.cmsuser_group_history.html} {help id="id-cmsuser_group_history" title=$form.cmsuser_group_history.label}
       </td>
     </tr>
 
     <tr>
       <td class="label">{$form.cmsuser_group_reset.label}</td>
       <td>
-        {$form.cmsuser_group_reset.html} {help id="id-cmsuser_group_reset"}
+        {$form.cmsuser_group_reset.html} {help id="id-cmsuser_group_reset" title=$form.cmsuser_group_reset.label}
       </td>
     </tr>
     <tr>
@@ -81,20 +88,20 @@
     <tr>
       <td class="label">{$form.cmsuser_tag_create.label}</td>
       <td>
-        {$form.cmsuser_tag_create.html} {help id="id-cmsuser_tag_create"}
+        {$form.cmsuser_tag_create.html} {help id="id-cmsuser_tag_create" title=$form.cmsuser_tag_create.label}
       </td>
     </tr>
     <tr>
       <td class="label">{$form.cmsuser_tag_history.label}</td>
       <td>
-        {$form.cmsuser_tag_history.html} {help id="id-cmsuser_tag_history"}
+        {$form.cmsuser_tag_history.html} {help id="id-cmsuser_tag_history" title=$form.cmsuser_tag_history.label}
       </td>
     </tr>
 
     <tr>
       <td class="label">{$form.cmsuser_tag_reset.label}</td>
       <td>
-        {$form.cmsuser_tag_reset.html} {help id="id-cmsuser_tag_reset"}
+        {$form.cmsuser_tag_reset.html} {help id="id-cmsuser_tag_reset" title=$form.cmsuser_tag_reset.label}
       </td>
     </tr>
   </table>

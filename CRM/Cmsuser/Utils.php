@@ -20,7 +20,6 @@ class CRM_Cmsuser_Utils {
    *   contact id that has been created
    */
   public static function create(&$params, $mail) {
-    $config = CRM_Core_Config::singleton();
     $ufID = FALSE;
     if (CIVICRM_UF == 'Drupal8') {
       $ufID = self::create_d8($params, $mail);
@@ -79,7 +78,6 @@ class CRM_Cmsuser_Utils {
       }
     }
     // PATCH END
-
     // Validate the user object
     $violations = $account->validate();
     if (count($violations)) {
@@ -111,11 +109,6 @@ class CRM_Cmsuser_Utils {
       case 'visitors_admin_approval':
         _user_mail_notify('register_pending_approval', $account);
         break;
-    }
-
-    // If this is a user creating their own account, login them in!
-    if (!$verify_mail_conf && $account->isActive() && $user->isAnonymous()) {
-      \user_login_finalize($account);
     }
 
     return $account->id();
@@ -178,6 +171,30 @@ class CRM_Cmsuser_Utils {
     }
 
     return $form_state['user']->uid;
+  }
+
+
+  /**
+   * Function to auto login user.
+   *
+   * @param int $cmsUserID
+   */
+  public static function autoLogin($cmsUserID) {
+    // if Operation is done by logged in user then do not log in.
+    if (CRM_Utils_System::isUserLoggedIn()) {
+      return;
+    }
+    if (CIVICRM_UF == 'Drupal8') {
+      $account = \Drupal\user\Entity\User::load($cmsUserID);
+      \user_login_finalize($account);
+    }
+    elseif (CIVICRM_UF == 'Drupal') {
+      // if Operation is done by logged in user then do not log in.
+      global $user;
+      $user = user_load($cmsUserID);
+      $formState['uid'] = $user->uid;
+      user_login_finalize($formState);
+    }
   }
 
 }

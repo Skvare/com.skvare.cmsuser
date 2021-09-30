@@ -62,9 +62,11 @@ function civicrm_api3_job_Cmsuser($params) {
  * @param bool $isGroup
  * @param array $createImmediately list of contact ids
  */
-function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []) {
+function _cms_user_create($setDefaults, $isGroup = TRUE,
+                          $createImmediately = [], $throughForm = FALSE) {
   $domainID = CRM_Core_Config::domainID();
   $config = CRM_Core_Config::singleton();
+  $cmsUserID = NULL;
   // check this call for group or tag
   if (!empty($createImmediately)) {
     $contactX = $createImmediately;
@@ -133,6 +135,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
               'error_message' => 'Contact is already connected to a CMS user account.',
               'user_exist' => TRUE,
             ];
+            $cmsUserID = $match['uf_id'];
             break;
           }
         }
@@ -178,6 +181,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
           if (empty($errors)) {
             // call our custom api to create user
             $api = civicrm_api3('Cmsuser', 'Create', $createParams);
+            $cmsUserID = $api['values']['uf_id'];
             if (empty($api['is_error']) && !empty($setDefaults['cmsuser_cms_roles'])) {
               if ($api['values']['uf_id']) {
                 if (CIVICRM_UF == 'Drupal8') {
@@ -227,7 +231,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
           if ($isGroup) {
             if ($setDefaults['cmsuser_group_history']) {
               // add contact to group
-              $resultGroupContact = civicrm_api3('GroupContact', 'create', [
+              civicrm_api3('GroupContact', 'create', [
                 'contact_id' => $contactID,
                 'group_id' => $setDefaults['cmsuser_group_history'],
               ]);
@@ -323,6 +327,10 @@ function _cms_user_create($setDefaults, $isGroup = TRUE, $createImmediately = []
         ]);
       }
     }
+
+    if ($throughForm && !empty($cmsUserID)) {
+      return $cmsUserID;
+    }
   }
 }
 
@@ -365,7 +373,6 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
 
         $resetParams = ['uf_id' => $uf_id];
         // call our custom api to reset user
-        //CRM_Core_Error::debug_var('Cmsuser API  $resetParams', $resetParams);
         $api = civicrm_api3('Cmsuser', 'Reset', $resetParams);
       }
       catch (CiviCRM_API3_Exception $e) {
@@ -383,7 +390,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
           }
           else {
             // remove contact from Reset Tag, so that on next iteration, same contact not get pulled
-            $result = civicrm_api3('EntityTag', 'delete', [
+            civicrm_api3('EntityTag', 'delete', [
               'entity_table' => 'civicrm_contact',
               'entity_id' => $contactID,
               'tag_id' => $setDefaults['cmsuser_tag_reset'],
@@ -430,7 +437,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
     if ($isGroup and !empty($groupContactDeleted)) {
       foreach ($groupContactDeleted as $contactId) {
         // api does not accept multiple contacts, so iterating here.
-        $result = civicrm_api3('GroupContact', 'delete', [
+        civicrm_api3('GroupContact', 'delete', [
           'contact_id' => $contactId,
           'group_id' => $setDefaults['cmsuser_group_reset'],
           'skip_undelete' => TRUE,
@@ -474,7 +481,6 @@ function _get_group_contact($group_id) {
   ]);
   $groupContacts = [];
   // make list of all contact ids
-  $domainID = CRM_Core_Config::domainID();
   foreach ($groupContactResult['values'] as $entity) {
     $groupContacts[] = $entity['contact_id'];
   }

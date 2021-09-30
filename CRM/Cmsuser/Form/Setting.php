@@ -11,10 +11,10 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
   public function buildQuickForm() {
 
     // add form elements
-
     $this->add('text', 'cmsuser_pattern', 'Username pattern', ['size' => 60], TRUE);
     $this->add('advcheckbox', 'cmsuser_notify', ts('Notify User?'));
     $this->add('advcheckbox', 'cmsuser_create_immediately', ts('Create New User Immediately?'));
+    $this->add('advcheckbox', 'cmsuser_login_immediately', ts('Login New User Immediately?'));
     if (CIVICRM_UF == 'Drupal8') {
       $user_role_names = user_role_names();
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
@@ -95,8 +95,18 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $setDefaults[$elementName] = $settings->get($elementName);
     }
     $this->setDefaults($setDefaults);
+    $this->addFormRule(['CRM_Cmsuser_Form_Setting', 'formRule'], $this);
 
     parent::buildQuickForm();
+  }
+
+  public static function formRule($values, $files, &$self) {
+    $errors = [];
+    if (!empty($values['cmsuser_login_immediately']) && empty($values['cmsuser_create_immediately'])) {
+      $errors['cmsuser_login_immediately'] = ts('Login Immediately only work with Create Immediately field.');
+    }
+
+    return empty($errors) ? TRUE : $errors;
   }
 
   public function postProcess() {
