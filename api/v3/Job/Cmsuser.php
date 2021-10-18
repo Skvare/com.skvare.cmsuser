@@ -167,18 +167,31 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
             $createParams['custom_fields'] = $additionalFields;
           }
           // get primary email of civicrm contact
-          $createParams['email'] = civicrm_api3('Email', 'getvalue', [
-            'contact_id' => $contactID,
-            'is_primary' => 1,
-            'return' => 'email',
-          ]);
           $errors = [];
+          try {
+            $createParams['email'] = civicrm_api3('Email', 'getvalue', [
+              'contact_id' => $contactID,
+              'is_primary' => 1,
+              'return' => 'email',
+            ]);
+          }
+          catch (CiviCRM_API3_Exception $e) {
+            $api = [
+              'is_error' => 1,
+              'error_message' => $e->getMessage(),
+              'email_already_taken' => TRUE,
+            ];
+            $errors[] = $e->getMessage();
+            $groupContactDeleted[] = $contactID;
+          }
           $check_params = [
             'name' => $createParams['cms_name'],
             'mail' => $createParams['email'],
           ];
-          $config->userSystem->checkUserNameEmailExists($check_params, $errors);
-          if (empty($errors)) {
+          if (!empty($createParams['email'])) {
+            $config->userSystem->checkUserNameEmailExists($check_params, $errors);
+          }
+          if (empty($errors) && !empty($createParams['email'])) {
             // call our custom api to create user
             $api = civicrm_api3('Cmsuser', 'Create', $createParams);
             $cmsUserID = $api['values']['uf_id'];
@@ -292,7 +305,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
           'details' => $activityDetails,
         ]);
 
-        if (!empty($api['is_error']) && !empty($api['email_already_taken'])) {
+        if (!empty($api['is_error']) || !empty($api['email_already_taken'])) {
           $result = civicrm_api3('Activity', 'getcount', [
             'activity_type_id' => "User Account Creation",
             'status_id' => "Failed",
@@ -324,14 +337,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
     // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
     // one go.
     if ($isGroup and !empty($groupContactDeleted)) {
-      foreach ($groupContactDeleted as $contactId) {
-        // api does not accept multiple contacts, so iterating here.
-        $result = civicrm_api3('GroupContact', 'delete', [
-          'contact_id' => $contactId,
-          'group_id' => $setDefaults['cmsuser_group_create'],
-          'skip_undelete' => TRUE,
-        ]);
-      }
+      CRM_Contact_BAO_GroupContact::removeContactsFromGroup($groupContactDeleted, $setDefaults['cmsuser_group_create'], 'Deleted');
     }
 
     if ($throughForm && !empty($cmsUserID)) {
@@ -441,14 +447,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
     // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
     // one go.
     if ($isGroup and !empty($groupContactDeleted)) {
-      foreach ($groupContactDeleted as $contactId) {
-        // api does not accept multiple contacts, so iterating here.
-        civicrm_api3('GroupContact', 'delete', [
-          'contact_id' => $contactId,
-          'group_id' => $setDefaults['cmsuser_group_reset'],
-          'skip_undelete' => TRUE,
-        ]);
-      }
+      CRM_Contact_BAO_GroupContact::removeContactsFromGroup($groupContactDeleted, $setDefaults['cmsuser_group_reset'], 'Deleted');
     }
   }
 }
