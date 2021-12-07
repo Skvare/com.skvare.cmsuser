@@ -52,7 +52,7 @@
       <td class="label">{$form.cmsuser_user_fields.label}</td>
       <td>
           {$form.cmsuser_user_fields.html} {help id="id-cmsuser_user_fields" title=$form.cmsuser_user_fields.label}
-           <input class="crm-token-selector big" data-field="cmsuser_user_fieldscor" />
+           <input class="crm-token-selector big" data-field="cmsuser_user_fields" />
           <br/><br/>
         {ts}List of Custom Fields available to users.{/ts}
         {$fieldHtml}
