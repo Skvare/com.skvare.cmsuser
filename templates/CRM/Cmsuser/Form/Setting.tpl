@@ -13,6 +13,7 @@
       <td class="label">{$form.cmsuser_pattern.label}</td>
       <td>
         {$form.cmsuser_pattern.html} {help id="id-cmsuser_pattern" title=$form.cmsuser_pattern.label}
+        <input class="crm-token-selector big" data-field="cmsuser_pattern" />
         <div class="description">Pattern for username selection. All CiviCRM tokens are supported.</div>
       </td>
     </tr>
@@ -27,7 +28,8 @@
       <td class="label">{$form.cmsuser_cms_roles.label}</td>
       <td>
           {$form.cmsuser_cms_roles.html}<br/>
-        <div class="description">Assign Roles to newly created users.</div>
+        <div class="description">Assign Roles to newly created users,<br/>
+          whether user created immediately during the form submission or through Group or Tag configured for scheduled job.</div>
       </td>
     </tr>
     {/if}
@@ -50,6 +52,7 @@
       <td class="label">{$form.cmsuser_user_fields.label}</td>
       <td>
           {$form.cmsuser_user_fields.html} {help id="id-cmsuser_user_fields" title=$form.cmsuser_user_fields.label}
+           <input class="crm-token-selector big" data-field="cmsuser_user_fieldscor" />
           <br/><br/>
         {ts}List of Custom Fields available to users.{/ts}
         {$fieldHtml}
@@ -111,3 +114,6 @@
   </div>
 
 </div>
+
+{include file="CRM/Cmsuser/Form/InsertTokens.tpl"}
+

@@ -12,11 +12,17 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
 
     // add form elements
     $this->add('text', 'cmsuser_pattern', 'Username pattern', ['size' => 60], TRUE);
+    //get the tokens.
+    $tokens = CRM_Core_SelectValues::contactTokens();
+    $tokens = array_merge($tokens, CRM_Core_SelectValues::domainTokens());
+    $this->assign('tokens', CRM_Utils_Token::formatTokensForDisplay($tokens));
+
     $this->add('advcheckbox', 'cmsuser_notify', ts('Notify User?'));
     $this->add('advcheckbox', 'cmsuser_create_immediately', ts('Create New User Immediately?'));
     $this->add('advcheckbox', 'cmsuser_login_immediately', ts('Login New User Immediately?'));
     if (CIVICRM_UF == 'Drupal8') {
-      $user_role_names = user_role_names();
+      $user_role_names = user_role_names(TRUE);
+      unset($user_role_names['authenticated']);
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
 
@@ -51,6 +57,9 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $bundle_name = NULL;
       $fields_info = field_info_instances($entity_type, $bundle_name);
       $user_role_names = user_roles(TRUE);
+      if (defined('DRUPAL_AUTHENTICATED_RID')) {
+        unset($user_role_names[DRUPAL_AUTHENTICATED_RID]);
+      }
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
 
