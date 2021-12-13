@@ -105,6 +105,10 @@ class CRM_Cmsuser_Utils {
 
       return FALSE;
     }
+    if (!empty($params['notify'])) {
+      _user_mail_notify('register_no_approval_required', $account);
+    }
+    /*
     switch ($params['notify']) {
       case $user_register_conf == 'admin_only' || $user->isAuthenticated():
         _user_mail_notify('register_admin_created', $account);
@@ -118,6 +122,7 @@ class CRM_Cmsuser_Utils {
         _user_mail_notify('register_pending_approval', $account);
         break;
     }
+    */
 
     return $account->id();
   }
