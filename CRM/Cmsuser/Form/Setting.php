@@ -115,7 +115,7 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
     parent::buildQuickForm();
   }
 
-  public static function formRule($values, $files, &$self) {
+  public static function formRule($values, $files, $self) {
     $errors = [];
     if (!empty($values['cmsuser_login_immediately']) && empty($values['cmsuser_create_immediately'])) {
       $errors['cmsuser_login_immediately'] = ts('Login Immediately only work with Create Immediately field.');

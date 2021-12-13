@@ -102,8 +102,10 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
     foreach ($p->getRows() as $row) {
       $contactID = $row->context['contactId'];
       $cms_name = $row->render('username');
-      $additionalFields = [];
-      $fieldsMapping = $row->render('fieldsmapping');
+      $additionalFields = $fieldsMapping = [];
+      if (!empty($setDefaults['cmsuser_user_fields'])) {
+        $fieldsMapping = $row->render('fieldsmapping');
+      }
 
       if (!empty($fieldsMapping)) {
         // convert new line into array
