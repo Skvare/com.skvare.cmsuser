@@ -60,6 +60,10 @@ class CRM_Cmsuser_Utils {
     $account = \Drupal::entityTypeManager()->getStorage('user')->create();
     $account->setUsername($params['cms_name'])->setEmail($params[$mail]);
 
+    $account->setPassword(FALSE);
+    $account->enforceIsNew();
+    $account->activate();
+    /*
     // Allow user to set password only if they are an admin or if
     // the site settings don't require email verification.
     if (!$verify_mail_conf || $user->hasPermission('administer users')) {
@@ -74,6 +78,7 @@ class CRM_Cmsuser_Utils {
     else {
       $account->activate();
     }
+    */
 
     // PATCH START : Add Drupal user Custom field, mostly those are required.
     if (!empty($params['custom_fields'])) {
