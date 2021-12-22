@@ -52,7 +52,7 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $this->assign('fieldHtml', $fieldHtml);
       $this->addElement('textarea', 'cmsuser_user_fields', ts('Drupal User Fields'), ['rows' => 5, 'cols' => 50]);
     }
-    elseif (CIVICRM_UF == 'Drupal') {
+    elseif (CIVICRM_UF == 'Drupal' || CIVICRM_UF == 'Backdrop') {
       $entity_type = 'user';
       $bundle_name = NULL;
       $fields_info = field_info_instances($entity_type, $bundle_name);
@@ -70,7 +70,11 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       }
       $fieldHtml .= "</table>";
       $this->assign('fieldHtml', $fieldHtml);
-      $this->addElement('textarea', 'cmsuser_user_fields', ts('Drupal User Fields'), ['rows' => 5, 'cols' => 50]);
+      $title = ts('Drupal User Fields');
+      if (CIVICRM_UF == 'Backdrop') {
+        $title = ts('Backdrop User Fields');
+      }
+      $this->addElement('textarea', 'cmsuser_user_fields', $title, ['rows' => 5, 'cols' => 50]);
     }
     elseif (CIVICRM_UF == 'WordPress') {
       global $wp_roles;

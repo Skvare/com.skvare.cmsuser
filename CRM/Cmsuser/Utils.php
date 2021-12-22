@@ -27,6 +27,9 @@ class CRM_Cmsuser_Utils {
     elseif (CIVICRM_UF == 'Drupal') {
       $ufID = self::create_d7($params, $mail);
     }
+    elseif (CIVICRM_UF == 'Backdrop') {
+      $ufID = self::create_backdrop($params, $mail);
+    }
     elseif (CIVICRM_UF == 'WordPress') {
       $ufID = self::create_wordpress($params, $mail);
     }
@@ -188,6 +191,66 @@ class CRM_Cmsuser_Utils {
   }
 
   /**
+   * Function to create user for Backdrop
+   * @param $params
+   * @param $mail
+   *
+   * @return bool
+   */
+  public static function create_backdrop(&$params, $mail) {
+    $form_state = form_state_defaults();
+
+    $form_state['input'] = [
+      'name' => $params['cms_name'],
+      'mail' => $params[$mail],
+      'op' => 'Create new account',
+    ];
+    $form_state['input']['pass'] = ['pass1' => $params['cms_pass'], 'pass2' => $params['cms_pass']];
+
+    // PATCH START : Add Drupal user Custom field, mostly those are required.
+    if (!empty($params['custom_fields'])) {
+      foreach ($params['custom_fields'] as $fieldName => $fieldValue) {
+        $form_state['input'][$fieldName] = [LANGUAGE_NONE => [['value' => $fieldValue]]];
+      }
+    }
+    // PATCH END
+    if (!empty($params['notify'])) {
+      $form_state['input']['notify'] = $params['notify'];
+    }
+
+    $form_state['rebuild'] = FALSE;
+    $form_state['programmed'] = TRUE;
+    $form_state['complete form'] = FALSE;
+    $form_state['method'] = 'post';
+    $form_state['build_info']['args'] = [];
+    /*
+     * if we want to submit this form more than once in a process (e.g. create more than one user)
+     * we must force it to validate each time for this form. Otherwise it will not validate
+     * subsequent submissions and the manner in which the password is passed in will be invalid
+     */
+    $form_state['must_validate'] = TRUE;
+    $config = CRM_Core_Config::singleton();
+
+    // we also need to redirect b
+    $config->inCiviCRM = TRUE;
+
+    $form = backdrop_retrieve_form('user_register_form', $form_state);
+    $form_state['process_input'] = 1;
+    $form_state['submitted'] = 1;
+    $form['#array_parents'] = [];
+    $form['#tree'] = FALSE;
+    backdrop_process_form('user_register_form', $form, $form_state);
+
+    $config->inCiviCRM = FALSE;
+
+    if (form_get_errors()) {
+      return FALSE;
+    }
+
+    return $form_state['user']->uid;
+  }
+
+  /**
    * Function to create user for WordPress.
    * @param $params
    * @param $mail
@@ -260,7 +323,7 @@ class CRM_Cmsuser_Utils {
       $account = \Drupal\user\Entity\User::load($cmsUserID);
       \user_login_finalize($account);
     }
-    elseif (CIVICRM_UF == 'Drupal') {
+    elseif (CIVICRM_UF == 'Drupal' || CIVICRM_UF == 'Backdrop') {
       // if Operation is done by logged in user then do not log in.
       global $user;
       $user = user_load($cmsUserID);

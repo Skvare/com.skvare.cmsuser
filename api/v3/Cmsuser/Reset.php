@@ -28,7 +28,7 @@ function _civicrm_api3_cmsuser_Reset_spec(&$spec) {
 function civicrm_api3_cmsuser_Reset($params) {
   civicrm_api3_verify_mandatory($params, NULL, ['uf_id']);
   $config = CRM_Core_Config::singleton();
-  if ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal') {
+  if (CIVICRM_UF == 'Drupal') {
     require_once DRUPAL_ROOT . '/modules/user/user.pages.inc';
     // for Drupal 7
     global $language;
@@ -41,7 +41,21 @@ function civicrm_api3_cmsuser_Reset($params) {
       return civicrm_api3_create_error('Failed to send reset email to CMS user account, user not exit', $params);
     }
   }
-  elseif ($config->userSystem->is_drupal && CIVICRM_UF == 'Drupal8') {
+  elseif (CIVICRM_UF == 'Backdrop') {
+    require_once BACKDROP_ROOT . '/core/modules/user/user.pages.inc';
+    // for Backdrop
+    global $language;
+    $account = user_load($params['uf_id']);
+    // Mail one time login URL and instructions using current language.
+    if (!empty($account)) {
+      $mail = _user_mail_notify('password_reset', $account, $language);
+      watchdog('user', 'Reset Password sent %name.', array('%name' => $params['uf_id']));
+    }
+    else {
+      return civicrm_api3_create_error('Failed to send reset email to CMS user account, user not exit', $params);
+    }
+  }
+  elseif (CIVICRM_UF == 'Drupal8') {
     // for Drupal 8
     $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $account = \Drupal\user\Entity\User::load($params['uf_id']);

@@ -220,6 +220,18 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
                     user_save($account, ['roles' => $roles]);
                   }
                 }
+                elseif (CIVICRM_UF == 'Backdrop') {
+                  $account = user_load((int)$api['values']['uf_id'], TRUE);
+                  // Skip adding the role to the user if they already have it.
+                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+                    if ($account !== FALSE && !in_array($role, $account->roles)) {
+                      $account->roles[] = $role;
+                    }
+                  }
+                  if (!empty($account->roles)) {
+                    $account->save();
+                  }
+                }
                 elseif (CIVICRM_UF == 'WordPress') {
                   if (!empty($setDefaults['cmsuser_cms_roles'])) {
                     $user = new WP_User($api['values']['uf_id']);
