@@ -82,6 +82,12 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge']);
     }
+    elseif (CIVICRM_UF == 'Joomla') {
+      $groupList = CRM_Cmsuser_Utils::getJoomlaGroups();
+      $groupList = ['' => '-select-'] + $groupList;
+      $this->add('select', 'cmsuser_cms_roles', ts('Assign User Groups to Users'),
+        $groupList, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
+    }
 
     $groups = ['' => '-- select --'] + CRM_Core_PseudoConstant::nestedGroup();
     $tags = ['' => '-- select --'] + CRM_Core_PseudoConstant::get('CRM_Core_DAO_EntityTag', 'tag_id', ['onlyActive' => FALSE]);

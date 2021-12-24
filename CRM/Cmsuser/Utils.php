@@ -33,6 +33,10 @@ class CRM_Cmsuser_Utils {
     elseif (CIVICRM_UF == 'WordPress') {
       $ufID = self::create_wordpress($params, $mail);
     }
+    elseif (CIVICRM_UF == 'Joomla') {
+      $params['cms_pass'] = rand();
+      $ufID = self::create_joomla($params, $mail);
+    }
 
     //if contact doesn't already exist create UF Match
     if ($ufID !== FALSE && isset($params['contactID'])) {
@@ -308,6 +312,42 @@ class CRM_Cmsuser_Utils {
     return $uid;
   }
 
+  /**
+   * Function to create user for Joomla.
+   *
+   * @param $params
+   * @param $mail
+   * @return false|int|null
+   */
+  public static function create_joomla(&$params, $mail) {
+    if (isset($params['name'])) {
+      $fullName = trim($params['name']);
+    }
+    elseif (isset($params['contactID'])) {
+      $fullName = trim(CRM_Contact_BAO_Contact::displayName($params['contactID']));
+    }
+    else {
+      $fullName = trim($params['cms_name']);
+    }
+    $user = new JUser;
+    $user_data = [
+      "username" => $params['cms_name'],
+      "name" => $fullName,
+      "email" => $params[$mail],
+      "block" => 0,
+      "activated" => 1,
+      "is_guest" => 0
+    ];
+
+    if (!$user->bind($user_data)) {
+      return FALSE;
+    }
+    if (!$user->save()) {
+      return FALSE;
+    }
+
+    return $user->id;
+  }
 
   /**
    * Function to auto login user.
@@ -338,6 +378,22 @@ class CRM_Cmsuser_Utils {
         wp_set_auth_cookie($user->ID);
       }
     }
+    elseif (CIVICRM_UF == 'Joomla') {
+      $user = new JUser($cmsUserID);
+      $session = JFactory::getSession();
+      $session->set('user', $user);
+    }
+  }
+
+  public static function getJoomlaGroups() {
+    jimport('joomla.user.helper');
+    $groups = Joomla\CMS\Helper\UserGroupsHelper::getInstance()->getAll();
+    $groups = json_decode(json_encode($groups), TRUE);
+    $groupList = [];
+    foreach ($groups as $key => $group) {
+      $groupList[$key] = $group['title'];
+    }
+    return $groupList;
   }
 
 }

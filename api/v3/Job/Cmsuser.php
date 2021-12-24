@@ -238,6 +238,16 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
                     $user->set_role($setDefaults['cmsuser_cms_roles']);
                   }
                 }
+                elseif (CIVICRM_UF == 'Joomla') {
+                  $joomlaID = (int)$api['values']['uf_id'];
+                  $account = JUser::getInstance($joomlaID);
+                  // Skip adding the group to the user if they already have it.
+                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+                    if ($account !== FALSE && !isset($account->groups[$role])) {
+                      JUserHelper::addUserToGroup($joomlaID, $role);
+                    }
+                  }
+                }
               }
             }
           }
@@ -309,16 +319,17 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
         }
       }
       try {
-        civicrm_api3('Activity', 'create', [
+        $activityParams = [
           'source_record_id' => $contactID,
           'target_contact_id' => $contactID,
+          'source_contact_id' => CRM_Core_Session::getLoggedInContactID() ?? $contactID,
           'activity_type_id' => $activities['activity_creation'],
           'status_id' => $activityStatus,
           'subject' => $activitySubject,
           'check_permissions' => 0,
           'details' => $activityDetails,
-        ]);
-
+        ];
+        $activityResult = civicrm_api3('Activity', 'create', $activityParams);
         if (!empty($api['is_error']) || !empty($api['email_already_taken'])) {
           $result = civicrm_api3('Activity', 'getcount', [
             'activity_type_id' => "User Account Creation",
@@ -343,7 +354,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
         }
       }
       catch (CiviCRM_API3_Exception $exception) {
-
+        CRM_Core_Error::debug_var('exception', $exception->getMessage());
       }
     }
 
