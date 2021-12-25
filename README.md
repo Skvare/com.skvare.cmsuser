@@ -1,6 +1,6 @@
 # com.skvare.cmsuser
 
-![Screenshot](/images/screenshot_1.png)
+![Screenshot](/images/screenshot_2.png)
 
 Extension to Create CMS user for Contacts from either Group or Tag, this 
 functionality runs using Scheduled Job or Immediately using hook when contact
@@ -15,8 +15,6 @@ The extension is licensed under [AGPL-3.0](LICENSE.txt).
 * PHP v7.0+
 * CiviCRM (5.0)
 
-#Note 
-Currently it only works with Drupal and WordPress only.
 
 ## Installation (Web UI)
 
