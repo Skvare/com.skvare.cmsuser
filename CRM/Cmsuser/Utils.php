@@ -150,7 +150,8 @@ class CRM_Cmsuser_Utils {
       'op' => 'Create new account',
     ];
     $form_state['input']['pass'] = ['pass1' => $params['cms_pass'], 'pass2' => $params['cms_pass']];
-
+    // Make status unblocked, otherwise auto login will not work.
+    $form_state['input']['status'] = 1;
     // PATCH START : Add Drupal user Custom field, mostly those are required.
     if (!empty($params['custom_fields'])) {
       foreach ($params['custom_fields'] as $fieldName => $fieldValue) {
@@ -210,6 +211,8 @@ class CRM_Cmsuser_Utils {
       'op' => 'Create new account',
     ];
     $form_state['input']['pass'] = ['pass1' => $params['cms_pass'], 'pass2' => $params['cms_pass']];
+    // Make status unblocked, otherwise auto login will not work.
+    $form_state['input']['status'] = 1;
 
     // PATCH START : Add Drupal user Custom field, mostly those are required.
     if (!empty($params['custom_fields'])) {
