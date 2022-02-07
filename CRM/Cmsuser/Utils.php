@@ -396,4 +396,127 @@ class CRM_Cmsuser_Utils {
     return $groupList;
   }
 
+  /**
+   * Function to get user details.
+   * @param $userId
+   * @return \Drupal\Core\Entity\EntityBase|\Drupal\Core\Entity\EntityInterface|\Drupal\user\Entity\User|WP_User|null
+   */
+  public static function loadUser($userId) {
+    if (CIVICRM_UF == 'Drupal8') {
+      $account = \Drupal\user\Entity\User::load($userId);
+    }
+    elseif (CIVICRM_UF == 'Drupal' || CIVICRM_UF == 'Backdrop') {
+      $account = user_load((int)$userId, TRUE);
+    }
+    elseif (CIVICRM_UF == 'WordPress') {
+      $account = new WP_User($userId);
+    }
+    elseif (CIVICRM_UF == 'Joomla') {
+      $account = JUser::getInstance((int)$userId);
+    }
+
+    return $account;
+  }
+
+  /**
+   * Function to assign role to user.
+   *
+   * @param $account
+   * @param $setDefaults
+   * @return false|mixed
+   */
+  public static function addRoleToUser(&$account, $setDefaults) {
+    if (CIVICRM_UF == 'Drupal8') {
+      foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+        $account->addRole($role);
+      }
+      $account->save();
+    }
+    elseif (CIVICRM_UF == 'Drupal') {
+      $allRoles = user_roles(TRUE);
+      $roles = [];
+      // Skip adding the role to the user if they already have it.
+      foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+        if ($account !== FALSE && !isset($account->roles[$role])) {
+          $roles = $account->roles + [$role => $allRoles[$role]];
+        }
+      }
+      if (!empty($roles)) {
+        user_save($account, ['roles' => $roles]);
+      }
+    }
+    elseif (CIVICRM_UF == 'Backdrop') {
+      // Skip adding the role to the user if they already have it.
+      foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+        if ($account !== FALSE && !in_array($role, $account->roles)) {
+          $account->roles[] = $role;
+        }
+      }
+      if (!empty($account->roles)) {
+        $account->save();
+      }
+    }
+    elseif (CIVICRM_UF == 'WordPress') {
+      $account->set_role($setDefaults['cmsuser_cms_roles']);
+    }
+    elseif (CIVICRM_UF == 'Joomla') {
+    }
+
+    return $account;
+  }
+
+  /**
+   * Function to check user have mentioned role
+   *
+   * @param $cmsUserID
+   * @param $roles
+   */
+  public static function isRolePresentToUser($userId, $roles) {
+    $account = self::loadUser($userId);
+    $hasRole = FALSE;
+    if (CIVICRM_UF == 'Drupal8') {
+      $userRoles = $account->getRoles();
+      foreach ($roles as $role) {
+        if (in_array($role, $userRoles)) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'Drupal') {
+      foreach ($roles as $role) {
+        if ($account !== FALSE && isset($account->roles[$role])) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'Backdrop') {
+      foreach ($roles as $role) {
+        if ($account !== FALSE && in_array($role, $account->roles)) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'WordPress') {
+      foreach ($roles as $role) {
+        if (in_array($role, (array)$account->roles)) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'Joomla') {
+      foreach ($roles as $role) {
+        if ($account !== FALSE && isset($account->groups[$role])) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+
+    return $hasRole;
+  }
+
 }

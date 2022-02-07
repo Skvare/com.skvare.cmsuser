@@ -31,7 +31,8 @@ function civicrm_api3_job_Cmsuser($params) {
   $setDefaults = [];
   $elementNames = [
     'cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
-    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles', 'cmsuser_user_fields'
+    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles', 'cmsuser_user_fields',
+    'cmsuser_allow_existing_user_login', 'cmsuser_block_roles_autologin'
   ];
 
   foreach ($elementNames as $elementName) {
@@ -200,47 +201,27 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
             if (empty($api['is_error']) && !empty($setDefaults['cmsuser_cms_roles'])) {
               if ($api['values']['uf_id']) {
                 if (CIVICRM_UF == 'Drupal8') {
-                  $account = \Drupal\user\Entity\User::load($api['values']['uf_id']);
-                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
-                    $account->addRole($role);
-                  }
-                  $account->save();
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                  CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
                 }
                 elseif (CIVICRM_UF == 'Drupal') {
-                  $allRoles = user_roles(TRUE);
-                  $roles = [];
-                  $account = user_load((int)$api['values']['uf_id'], TRUE);
-                  // Skip adding the role to the user if they already have it.
-                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
-                    if ($account !== FALSE && !isset($account->roles[$role])) {
-                      $roles = $account->roles + [$role => $allRoles[$role]];
-                    }
-                  }
-                  if (!empty($roles)) {
-                    user_save($account, ['roles' => $roles]);
-                  }
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                  CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
                 }
                 elseif (CIVICRM_UF == 'Backdrop') {
-                  $account = user_load((int)$api['values']['uf_id'], TRUE);
-                  // Skip adding the role to the user if they already have it.
-                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
-                    if ($account !== FALSE && !in_array($role, $account->roles)) {
-                      $account->roles[] = $role;
-                    }
-                  }
-                  if (!empty($account->roles)) {
-                    $account->save();
-                  }
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                  CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
+
                 }
                 elseif (CIVICRM_UF == 'WordPress') {
                   if (!empty($setDefaults['cmsuser_cms_roles'])) {
-                    $user = new WP_User($api['values']['uf_id']);
-                    $user->set_role($setDefaults['cmsuser_cms_roles']);
+                    $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                    CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
                   }
                 }
                 elseif (CIVICRM_UF == 'Joomla') {
                   $joomlaID = (int)$api['values']['uf_id'];
-                  $account = JUser::getInstance($joomlaID);
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
                   // Skip adding the group to the user if they already have it.
                   foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
                     if ($account !== FALSE && !isset($account->groups[$role])) {
@@ -366,6 +347,24 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
     }
 
     if ($throughForm && !empty($cmsUserID)) {
+      if (!empty($api['user_exist'])) {
+        if (!empty($setDefaults['cmsuser_block_roles_autologin'])) {
+          $hasBlockedRole = CRM_Cmsuser_Utils::isRolePresentToUser($cmsUserID,
+            $setDefaults['cmsuser_block_roles_autologin']);
+          if ($hasBlockedRole) {
+            CRM_Core_Error::debug_log_message("CMS User Extension: User ID {$cmsUserID}, Blocked Auto login due to role configuration.");
+
+            return;
+          }
+        }
+
+        if (empty($setDefaults['cmsuser_allow_existing_user_login'])) {
+          CRM_Core_Error::debug_log_message("CMS User Extension: User ID {$cmsUserID}, Existing user not allowed to auto login.");
+
+          return;
+        }
+      }
+
       return $cmsUserID;
     }
   }

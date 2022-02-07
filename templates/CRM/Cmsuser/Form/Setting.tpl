@@ -47,6 +47,22 @@
         <div class="description"></div>
       </td>
     </tr>
+    <tr>
+      <td class="label">{$form.cmsuser_allow_existing_user_login.label}</td>
+      <td>
+          {$form.cmsuser_allow_existing_user_login.html} {help id="id-cmsuser_allow_existing_user_login" title=$form.cmsuser_allow_existing_user_login.label}<br/>
+        <div class="description"></div>
+      </td>
+    </tr>
+    {if $form.cmsuser_block_roles_autologin.html}
+      <tr>
+        <td class="label">{$form.cmsuser_block_roles_autologin.label}</td>
+        <td>
+            {$form.cmsuser_block_roles_autologin.html}<br/>
+          <div class="description">Block auto login to users having these roles.</div>
+        </td>
+      </tr>
+    {/if}
     {if $form.cmsuser_user_fields.html}
     <tr>
       <td class="label">{$form.cmsuser_user_fields.label}</td>

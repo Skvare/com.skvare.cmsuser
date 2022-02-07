@@ -19,11 +19,14 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
 
     $this->add('advcheckbox', 'cmsuser_notify', ts('Notify User?'));
     $this->add('advcheckbox', 'cmsuser_create_immediately', ts('Create New User Immediately?'));
-    $this->add('advcheckbox', 'cmsuser_login_immediately', ts('Login New User Immediately?'));
+    $this->add('advcheckbox', 'cmsuser_login_immediately', ts('Login User Immediately?'));
+    $this->add('advcheckbox', 'cmsuser_allow_existing_user_login', ts('Allow existing User to auto login?'));
     if (CIVICRM_UF == 'Drupal8') {
       $user_role_names = user_role_names(TRUE);
       unset($user_role_names['authenticated']);
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
+        $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
+      $this->add('select', 'cmsuser_block_roles_autologin', ts('Block auto login for users with these roles'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
 
       $userFields = \Drupal::service('entity_field.manager')->getFieldDefinitions('user', 'user');
@@ -62,7 +65,8 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       }
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
-
+      $this->add('select', 'cmsuser_block_roles_autologin', ts('Block auto login for users with these roles'),
+        $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
       $fieldHtml = '<table><tr><th>Label</th><th>Field Name</th><th>Is Required</th></tr>';
       foreach ($fields_info['user'] as $fieldName => $fieldDetails) {
         $isRequired = !empty($fieldDetails['required']) ? '<strong>True</strong>' : 'False';
@@ -81,11 +85,15 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
       $user_role_names = ['' => '-select-'] + $wp_roles->get_names();
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge']);
+      $this->add('select', 'cmsuser_block_roles_autologin', ts('Block auto login for users with these roles'),
+        $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
     }
     elseif (CIVICRM_UF == 'Joomla') {
       $groupList = CRM_Cmsuser_Utils::getJoomlaGroups();
       $groupList = ['' => '-select-'] + $groupList;
       $this->add('select', 'cmsuser_cms_roles', ts('Assign User Groups to Users'),
+        $groupList, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
+      $this->add('select', 'cmsuser_block_roles_autologin', ts('Block auto login for users with these roles'),
         $groupList, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
     }
 
@@ -129,6 +137,13 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
     $errors = [];
     if (!empty($values['cmsuser_login_immediately']) && empty($values['cmsuser_create_immediately'])) {
       $errors['cmsuser_login_immediately'] = ts('Login Immediately only work with Create Immediately field.');
+    }
+
+    if (empty($values['cmsuser_login_immediately']) && !empty($values['cmsuser_allow_existing_user_login'])) {
+      $errors['cmsuser_login_immediately'] = ts('Allow existing User to auto login only work with Login Immediately field.');
+    }
+    if (empty($values['cmsuser_login_immediately']) && !empty($values['cmsuser_block_roles_autologin'])) {
+      $errors['cmsuser_login_immediately'] = ts('Block auto login for users with these roles only work with Login Immediately field.');
     }
 
     return empty($errors) ? TRUE : $errors;
