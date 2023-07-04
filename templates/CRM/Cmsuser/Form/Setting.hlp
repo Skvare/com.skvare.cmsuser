@@ -8,17 +8,14 @@
 {/htxt}
 
 {htxt id="id-cmsuser_user_fields"}
-    <p>{ts}Sometimes CMS have additional custom fields which are set to required while creating a user. By default CiviCRM just passes username, email and password details to drupal. But this is not sufficient, this section pulls up the custom field from drupal users field configuration and list here.{/ts}</p>
-	<p>{ts}We need to pass values from CiviCRM so that user creation does not get failed.{/ts}</p>
-    <p>Map Drupal user fields with CiviCRM field. Add a new line after each entry.<br/>
-        Example
-        <br/>
+    <p>{ts}Additional custom fields may be set to required when creating a new user in the CMS. By default, CiviCRM passes the username and email details to the CMS. The section below lists any custom fields used by the CMS when creating new users.{/ts}</p>
+    <p>CiviCRM tokens can be used to complete CMS fields. Use the following pattern:<br/>
         field_first_name={ldelim}contact.first_name{rdelim}<br/>
         field_last_name={ldelim}contact.last_name{rdelim}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_group_create"}
-    <p>{ts}CMS users get created for contacts from this group, once a user is created, the same contact gets removed from this group to avoid calling user create functionality again.{/ts}</p>
+    <p>{ts}CMS users get created for contacts from this group. After the CMS user is created, the contact is removed from the CiviCRM group.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_group_history"}
@@ -26,7 +23,7 @@
 {/htxt}
 
 {htxt id="id-cmsuser_group_reset"}
-    <p>{ts}Any Contact present in this group, their CMS user password gets reseted, then contact gets removed after reset. Reset action does send email to reset their  password. This is useful if users are migrated from different systems.{/ts}</p>
+    <p>{ts}Contacts in this group have their password reset and are notified by CMS email to reset their password. Can be useful when migrating from a different system.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_tag_create"}
@@ -38,11 +35,11 @@
 {/htxt}
 
 {htxt id="id-cmsuser_tag_reset"}
-    <p>{ts}Any Contact present in this tag, their CMS user password gets reseted, then contact gets removed after reset. Reset action does send email to reset their  password. This is useful if users are migrated from different systems.{/ts}</p>
+    <p>{ts}Contacts in this tag have their password reset and are notified by CMS email to reset their password. Can be useful when migrating from a different system.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_notify"}
-    <p>{ts}If this setting is enabled an email should be sent to the user to notify them of account creation and then can reset their password. Mail is sent by CMS  itself, check mailing template for 'new user' under CMS User Account configuration section.{/ts}</p>
+    <p>{ts}An email will be sent to the new user account email notifying them of account creation. The new user also will be able to reset their password. Mail is sent by the CMS and can be configured in the CMS.{/ts}</p>
 {/htxt}
 
 {htxt id="id-cmsuser_login_immediately"}

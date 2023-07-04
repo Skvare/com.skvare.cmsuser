@@ -31,7 +31,8 @@ function civicrm_api3_job_Cmsuser($params) {
   $setDefaults = [];
   $elementNames = [
     'cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
-    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles', 'cmsuser_user_fields'
+    'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles', 'cmsuser_user_fields',
+    'cmsuser_allow_existing_user_login', 'cmsuser_block_roles_autologin'
   ];
 
   foreach ($elementNames as $elementName) {
@@ -102,8 +103,10 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
     foreach ($p->getRows() as $row) {
       $contactID = $row->context['contactId'];
       $cms_name = $row->render('username');
-      $additionalFields = [];
-      $fieldsMapping = $row->render('fieldsmapping');
+      $additionalFields = $fieldsMapping = [];
+      if (!empty($setDefaults['cmsuser_user_fields'])) {
+        $fieldsMapping = $row->render('fieldsmapping');
+      }
 
       if (!empty($fieldsMapping)) {
         // convert new line into array
@@ -167,48 +170,63 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
             $createParams['custom_fields'] = $additionalFields;
           }
           // get primary email of civicrm contact
-          $createParams['email'] = civicrm_api3('Email', 'getvalue', [
-            'contact_id' => $contactID,
-            'is_primary' => 1,
-            'return' => 'email',
-          ]);
           $errors = [];
+          try {
+            $createParams['email'] = civicrm_api3('Email', 'getvalue', [
+              'contact_id' => $contactID,
+              'is_primary' => 1,
+              'return' => 'email',
+            ]);
+          }
+          catch (CiviCRM_API3_Exception $e) {
+            $api = [
+              'is_error' => 1,
+              'error_message' => $e->getMessage(),
+              'email_already_taken' => TRUE,
+            ];
+            $errors[] = $e->getMessage();
+            $groupContactDeleted[] = $contactID;
+          }
           $check_params = [
             'name' => $createParams['cms_name'],
             'mail' => $createParams['email'],
           ];
-          $config->userSystem->checkUserNameEmailExists($check_params, $errors);
-          if (empty($errors)) {
+          if (!empty($createParams['email'])) {
+            $config->userSystem->checkUserNameEmailExists($check_params, $errors);
+          }
+          if (empty($errors) && !empty($createParams['email'])) {
             // call our custom api to create user
             $api = civicrm_api3('Cmsuser', 'Create', $createParams);
             $cmsUserID = $api['values']['uf_id'];
             if (empty($api['is_error']) && !empty($setDefaults['cmsuser_cms_roles'])) {
               if ($api['values']['uf_id']) {
                 if (CIVICRM_UF == 'Drupal8') {
-                  $account = \Drupal\user\Entity\User::load($api['values']['uf_id']);
-                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
-                    $account->addRole($role);
-                  }
-                  $account->save();
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                  CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
                 }
                 elseif (CIVICRM_UF == 'Drupal') {
-                  $allRoles = user_roles(TRUE);
-                  $roles = [];
-                  $account = user_load((int)$api['values']['uf_id'], TRUE);
-                  // Skip adding the role to the user if they already have it.
-                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
-                    if ($account !== FALSE && !isset($account->roles[$role])) {
-                      $roles = $account->roles + [$role => $allRoles[$role]];
-                    }
-                  }
-                  if (!empty($roles)) {
-                    user_save($account, ['roles' => $roles]);
-                  }
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                  CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
+                }
+                elseif (CIVICRM_UF == 'Backdrop') {
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                  CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
+
                 }
                 elseif (CIVICRM_UF == 'WordPress') {
                   if (!empty($setDefaults['cmsuser_cms_roles'])) {
-                    $user = new WP_User($api['values']['uf_id']);
-                    $user->set_role($setDefaults['cmsuser_cms_roles']);
+                    $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                    CRM_Cmsuser_Utils::addRoleToUser($account, $setDefaults);
+                  }
+                }
+                elseif (CIVICRM_UF == 'Joomla') {
+                  $joomlaID = (int)$api['values']['uf_id'];
+                  $account = CRM_Cmsuser_Utils::loadUser($api['values']['uf_id']);
+                  // Skip adding the group to the user if they already have it.
+                  foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+                    if ($account !== FALSE && !isset($account->groups[$role])) {
+                      JUserHelper::addUserToGroup($joomlaID, $role);
+                    }
                   }
                 }
               }
@@ -282,17 +300,18 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
         }
       }
       try {
-        civicrm_api3('Activity', 'create', [
+        $activityParams = [
           'source_record_id' => $contactID,
           'target_contact_id' => $contactID,
+          'source_contact_id' => CRM_Core_Session::getLoggedInContactID() ?? $contactID,
           'activity_type_id' => $activities['activity_creation'],
           'status_id' => $activityStatus,
           'subject' => $activitySubject,
           'check_permissions' => 0,
           'details' => $activityDetails,
-        ]);
-
-        if (!empty($api['is_error']) && !empty($api['email_already_taken'])) {
+        ];
+        $activityResult = civicrm_api3('Activity', 'create', $activityParams);
+        if (!empty($api['is_error']) || !empty($api['email_already_taken'])) {
           $result = civicrm_api3('Activity', 'getcount', [
             'activity_type_id' => "User Account Creation",
             'status_id' => "Failed",
@@ -316,7 +335,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
         }
       }
       catch (CiviCRM_API3_Exception $exception) {
-
+        CRM_Core_Error::debug_var('exception', $exception->getMessage());
       }
     }
 
@@ -324,17 +343,28 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
     // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
     // one go.
     if ($isGroup and !empty($groupContactDeleted)) {
-      foreach ($groupContactDeleted as $contactId) {
-        // api does not accept multiple contacts, so iterating here.
-        $result = civicrm_api3('GroupContact', 'delete', [
-          'contact_id' => $contactId,
-          'group_id' => $setDefaults['cmsuser_group_create'],
-          'skip_undelete' => TRUE,
-        ]);
-      }
+      CRM_Contact_BAO_GroupContact::removeContactsFromGroup($groupContactDeleted, $setDefaults['cmsuser_group_create'], 'Deleted');
     }
 
     if ($throughForm && !empty($cmsUserID)) {
+      if (!empty($api['user_exist'])) {
+        if (!empty($setDefaults['cmsuser_block_roles_autologin'])) {
+          $hasBlockedRole = CRM_Cmsuser_Utils::isRolePresentToUser($cmsUserID,
+            $setDefaults['cmsuser_block_roles_autologin']);
+          if ($hasBlockedRole) {
+            CRM_Core_Error::debug_log_message("CMS User Extension: User ID {$cmsUserID}, Blocked Auto login due to role configuration.");
+
+            return;
+          }
+        }
+
+        if (empty($setDefaults['cmsuser_allow_existing_user_login'])) {
+          CRM_Core_Error::debug_log_message("CMS User Extension: User ID {$cmsUserID}, Existing user not allowed to auto login.");
+
+          return;
+        }
+      }
+
       return $cmsUserID;
     }
   }
@@ -441,14 +471,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
     // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
     // one go.
     if ($isGroup and !empty($groupContactDeleted)) {
-      foreach ($groupContactDeleted as $contactId) {
-        // api does not accept multiple contacts, so iterating here.
-        civicrm_api3('GroupContact', 'delete', [
-          'contact_id' => $contactId,
-          'group_id' => $setDefaults['cmsuser_group_reset'],
-          'skip_undelete' => TRUE,
-        ]);
-      }
+      CRM_Contact_BAO_GroupContact::removeContactsFromGroup($groupContactDeleted, $setDefaults['cmsuser_group_reset'], 'Deleted');
     }
   }
 }

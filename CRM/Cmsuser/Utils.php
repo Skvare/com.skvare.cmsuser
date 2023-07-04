@@ -27,8 +27,15 @@ class CRM_Cmsuser_Utils {
     elseif (CIVICRM_UF == 'Drupal') {
       $ufID = self::create_d7($params, $mail);
     }
+    elseif (CIVICRM_UF == 'Backdrop') {
+      $ufID = self::create_backdrop($params, $mail);
+    }
     elseif (CIVICRM_UF == 'WordPress') {
       $ufID = self::create_wordpress($params, $mail);
+    }
+    elseif (CIVICRM_UF == 'Joomla') {
+      $params['cms_pass'] = rand();
+      $ufID = self::create_joomla($params, $mail);
     }
 
     //if contact doesn't already exist create UF Match
@@ -60,6 +67,10 @@ class CRM_Cmsuser_Utils {
     $account = \Drupal::entityTypeManager()->getStorage('user')->create();
     $account->setUsername($params['cms_name'])->setEmail($params[$mail]);
 
+    $account->setPassword(FALSE);
+    $account->enforceIsNew();
+    $account->activate();
+    /*
     // Allow user to set password only if they are an admin or if
     // the site settings don't require email verification.
     if (!$verify_mail_conf || $user->hasPermission('administer users')) {
@@ -74,6 +85,7 @@ class CRM_Cmsuser_Utils {
     else {
       $account->activate();
     }
+    */
 
     // PATCH START : Add Drupal user Custom field, mostly those are required.
     if (!empty($params['custom_fields'])) {
@@ -100,6 +112,10 @@ class CRM_Cmsuser_Utils {
 
       return FALSE;
     }
+    if (!empty($params['notify'])) {
+      _user_mail_notify('register_no_approval_required', $account);
+    }
+    /*
     switch ($params['notify']) {
       case $user_register_conf == 'admin_only' || $user->isAuthenticated():
         _user_mail_notify('register_admin_created', $account);
@@ -113,6 +129,7 @@ class CRM_Cmsuser_Utils {
         _user_mail_notify('register_pending_approval', $account);
         break;
     }
+    */
 
     return $account->id();
   }
@@ -133,7 +150,8 @@ class CRM_Cmsuser_Utils {
       'op' => 'Create new account',
     ];
     $form_state['input']['pass'] = ['pass1' => $params['cms_pass'], 'pass2' => $params['cms_pass']];
-
+    // Make status unblocked, otherwise auto login will not work.
+    $form_state['input']['status'] = 1;
     // PATCH START : Add Drupal user Custom field, mostly those are required.
     if (!empty($params['custom_fields'])) {
       foreach ($params['custom_fields'] as $fieldName => $fieldValue) {
@@ -167,6 +185,68 @@ class CRM_Cmsuser_Utils {
     $form['#array_parents'] = [];
     $form['#tree'] = FALSE;
     drupal_process_form('user_register_form', $form, $form_state);
+
+    $config->inCiviCRM = FALSE;
+
+    if (form_get_errors()) {
+      return FALSE;
+    }
+
+    return $form_state['user']->uid;
+  }
+
+  /**
+   * Function to create user for Backdrop
+   * @param $params
+   * @param $mail
+   *
+   * @return bool
+   */
+  public static function create_backdrop(&$params, $mail) {
+    $form_state = form_state_defaults();
+
+    $form_state['input'] = [
+      'name' => $params['cms_name'],
+      'mail' => $params[$mail],
+      'op' => 'Create new account',
+    ];
+    $form_state['input']['pass'] = ['pass1' => $params['cms_pass'], 'pass2' => $params['cms_pass']];
+    // Make status unblocked, otherwise auto login will not work.
+    $form_state['input']['status'] = 1;
+
+    // PATCH START : Add Drupal user Custom field, mostly those are required.
+    if (!empty($params['custom_fields'])) {
+      foreach ($params['custom_fields'] as $fieldName => $fieldValue) {
+        $form_state['input'][$fieldName] = [LANGUAGE_NONE => [['value' => $fieldValue]]];
+      }
+    }
+    // PATCH END
+    if (!empty($params['notify'])) {
+      $form_state['input']['notify'] = $params['notify'];
+    }
+
+    $form_state['rebuild'] = FALSE;
+    $form_state['programmed'] = TRUE;
+    $form_state['complete form'] = FALSE;
+    $form_state['method'] = 'post';
+    $form_state['build_info']['args'] = [];
+    /*
+     * if we want to submit this form more than once in a process (e.g. create more than one user)
+     * we must force it to validate each time for this form. Otherwise it will not validate
+     * subsequent submissions and the manner in which the password is passed in will be invalid
+     */
+    $form_state['must_validate'] = TRUE;
+    $config = CRM_Core_Config::singleton();
+
+    // we also need to redirect b
+    $config->inCiviCRM = TRUE;
+
+    $form = backdrop_retrieve_form('user_register_form', $form_state);
+    $form_state['process_input'] = 1;
+    $form_state['submitted'] = 1;
+    $form['#array_parents'] = [];
+    $form['#tree'] = FALSE;
+    backdrop_process_form('user_register_form', $form, $form_state);
 
     $config->inCiviCRM = FALSE;
 
@@ -235,6 +315,42 @@ class CRM_Cmsuser_Utils {
     return $uid;
   }
 
+  /**
+   * Function to create user for Joomla.
+   *
+   * @param $params
+   * @param $mail
+   * @return false|int|null
+   */
+  public static function create_joomla(&$params, $mail) {
+    if (isset($params['name'])) {
+      $fullName = trim($params['name']);
+    }
+    elseif (isset($params['contactID'])) {
+      $fullName = trim(CRM_Contact_BAO_Contact::displayName($params['contactID']));
+    }
+    else {
+      $fullName = trim($params['cms_name']);
+    }
+    $user = new JUser;
+    $user_data = [
+      "username" => $params['cms_name'],
+      "name" => $fullName,
+      "email" => $params[$mail],
+      "block" => 0,
+      "activated" => 1,
+      "is_guest" => 0
+    ];
+
+    if (!$user->bind($user_data)) {
+      return FALSE;
+    }
+    if (!$user->save()) {
+      return FALSE;
+    }
+
+    return $user->id;
+  }
 
   /**
    * Function to auto login user.
@@ -250,7 +366,7 @@ class CRM_Cmsuser_Utils {
       $account = \Drupal\user\Entity\User::load($cmsUserID);
       \user_login_finalize($account);
     }
-    elseif (CIVICRM_UF == 'Drupal') {
+    elseif (CIVICRM_UF == 'Drupal' || CIVICRM_UF == 'Backdrop') {
       // if Operation is done by logged in user then do not log in.
       global $user;
       $user = user_load($cmsUserID);
@@ -265,6 +381,145 @@ class CRM_Cmsuser_Utils {
         wp_set_auth_cookie($user->ID);
       }
     }
+    elseif (CIVICRM_UF == 'Joomla') {
+      $user = new JUser($cmsUserID);
+      $session = JFactory::getSession();
+      $session->set('user', $user);
+    }
+  }
+
+  public static function getJoomlaGroups() {
+    jimport('joomla.user.helper');
+    $groups = Joomla\CMS\Helper\UserGroupsHelper::getInstance()->getAll();
+    $groups = json_decode(json_encode($groups), TRUE);
+    $groupList = [];
+    foreach ($groups as $key => $group) {
+      $groupList[$key] = $group['title'];
+    }
+    return $groupList;
+  }
+
+  /**
+   * Function to get user details.
+   * @param $userId
+   * @return \Drupal\Core\Entity\EntityBase|\Drupal\Core\Entity\EntityInterface|\Drupal\user\Entity\User|WP_User|null
+   */
+  public static function loadUser($userId) {
+    if (CIVICRM_UF == 'Drupal8') {
+      $account = \Drupal\user\Entity\User::load($userId);
+    }
+    elseif (CIVICRM_UF == 'Drupal' || CIVICRM_UF == 'Backdrop') {
+      $account = user_load((int)$userId, TRUE);
+    }
+    elseif (CIVICRM_UF == 'WordPress') {
+      $account = new WP_User($userId);
+    }
+    elseif (CIVICRM_UF == 'Joomla') {
+      $account = JUser::getInstance((int)$userId);
+    }
+
+    return $account;
+  }
+
+  /**
+   * Function to assign role to user.
+   *
+   * @param $account
+   * @param $setDefaults
+   * @return false|mixed
+   */
+  public static function addRoleToUser(&$account, $setDefaults) {
+    if (CIVICRM_UF == 'Drupal8') {
+      foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+        $account->addRole($role);
+      }
+      $account->save();
+    }
+    elseif (CIVICRM_UF == 'Drupal') {
+      $allRoles = user_roles(TRUE);
+      $roles = [];
+      // Skip adding the role to the user if they already have it.
+      foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+        if ($account !== FALSE && !isset($account->roles[$role])) {
+          $roles = $account->roles + [$role => $allRoles[$role]];
+        }
+      }
+      if (!empty($roles)) {
+        user_save($account, ['roles' => $roles]);
+      }
+    }
+    elseif (CIVICRM_UF == 'Backdrop') {
+      // Skip adding the role to the user if they already have it.
+      foreach ($setDefaults['cmsuser_cms_roles'] as $role) {
+        if ($account !== FALSE && !in_array($role, $account->roles)) {
+          $account->roles[] = $role;
+        }
+      }
+      if (!empty($account->roles)) {
+        $account->save();
+      }
+    }
+    elseif (CIVICRM_UF == 'WordPress') {
+      $account->set_role($setDefaults['cmsuser_cms_roles']);
+    }
+    elseif (CIVICRM_UF == 'Joomla') {
+    }
+
+    return $account;
+  }
+
+  /**
+   * Function to check user have mentioned role
+   *
+   * @param $cmsUserID
+   * @param $roles
+   */
+  public static function isRolePresentToUser($userId, $roles) {
+    $account = self::loadUser($userId);
+    $hasRole = FALSE;
+    if (CIVICRM_UF == 'Drupal8') {
+      $userRoles = $account->getRoles();
+      foreach ($roles as $role) {
+        if (in_array($role, $userRoles)) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'Drupal') {
+      foreach ($roles as $role) {
+        if ($account !== FALSE && isset($account->roles[$role])) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'Backdrop') {
+      foreach ($roles as $role) {
+        if ($account !== FALSE && in_array($role, $account->roles)) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'WordPress') {
+      foreach ($roles as $role) {
+        if (in_array($role, (array)$account->roles)) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+    elseif (CIVICRM_UF == 'Joomla') {
+      foreach ($roles as $role) {
+        if ($account !== FALSE && isset($account->groups[$role])) {
+          $hasRole = TRUE;
+          break;
+        }
+      }
+    }
+
+    return $hasRole;
   }
 
 }
