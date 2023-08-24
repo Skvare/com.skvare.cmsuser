@@ -30,7 +30,7 @@ function civicrm_api3_job_Cmsuser($params) {
   $settings = Civi::settings($domainID);
   $setDefaults = [];
   $elementNames = [
-    'cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
+    'cmsuser_pattern', 'cmsuser_notify', 'cmsuser_preferred_language', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
     'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_cms_roles', 'cmsuser_user_fields',
     'cmsuser_allow_existing_user_login', 'cmsuser_block_roles_autologin'
   ];
@@ -166,6 +166,11 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
             'contactID' => $contactID,
             'notify' => $setDefaults['cmsuser_notify'],
           ];
+          // Preferred Language synchronization, with fallback to the default
+          if (array_key_exists('cmsuser_preferred_language', $setDefaults) && $setDefaults['cmsuser_preferred_language']) {
+            $preferredContactLang = \Civi\Api4\Contact::get(FALSE)->addWhere('id', '=', $contactID)->addSelect('preferred_language')->execute()->first()['preferred_language'];
+            $createParams['preferred_langcode'] = $preferredContactLang;
+          }
           if (!empty($additionalFields)) {
             $createParams['custom_fields'] = $additionalFields;
           }

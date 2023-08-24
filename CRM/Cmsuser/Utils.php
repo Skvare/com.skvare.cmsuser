@@ -67,6 +67,16 @@ class CRM_Cmsuser_Utils {
     $account = \Drupal::entityTypeManager()->getStorage('user')->create();
     $account->setUsername($params['cms_name'])->setEmail($params[$mail]);
 
+    // Check for preferred language
+    if (array_key_exists('preferred_langcode', $params) && $params['preferred_langcode']) {
+      // This is not a good approach: We just need the language string (ignoring the country) so we're going to split the locale selected.
+      // We're getting from `en_US` the string `en`
+      $langString = explode('_', $params['preferred_langcode']);
+      if (is_array($langString) && $langString[0]) {
+        $account->set('preferred_langcode', $langString[0]);
+      }
+    }
+
     $account->setPassword(FALSE);
     $account->enforceIsNew();
     $account->activate();

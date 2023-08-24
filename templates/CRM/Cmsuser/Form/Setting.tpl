@@ -23,6 +23,12 @@
         {$form.cmsuser_notify.html} {help id="id-cmsuser_notify" title=$form.cmsuser_notify.label}
       </td>
     </tr>
+    <tr>
+      <td class="label">{$form.cmsuser_preferred_language.label}</td>
+      <td>
+        {$form.cmsuser_preferred_language.html} {help id="id-cmsuser_preferred_language" title=$form.cmsuser_preferred_language.label}
+      </td>
+    </tr>
     {if $form.cmsuser_cms_roles.html}
     <tr>
       <td class="label">{$form.cmsuser_cms_roles.label}</td>
