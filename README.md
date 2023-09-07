@@ -2,10 +2,9 @@
 
 ![Screenshot](/images/screenshot_2.png)
 
-Extension to Create CMS user for Contacts from either Group or Tag, this 
-functionality runs using Scheduled Job or Immediately using hook when contact
-is added to either group or tag.  It's totally based on how you configured 
-the setting form.
+Extension to Create CMS User for Contacts from either Group or Tag; this functionality
+runs using Scheduled Job or Immediately using Hook when contact is added to either
+group or tag. It's totally based on how you configured the setting form.
 
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
@@ -42,20 +41,17 @@ cv en cmsuser
 
 ## Usage
 * `Administer CiviCRM` -> `CMS User Setting` (`/civicrm/admin/cmsuser`)
-* Configure the Setting form.
-     > Click on Help icon for more additional information of each field.
+* Configure the Settings form.
+     > Click on the Help icon for more information on each field.
 
-* You can configure this extension for 2 way users.
-    * Creating Immediate users through a post hook when any contact gets added to 
-either Group or Tag.
+* You can configure this extension for two-way users.
+    * Creating immediate users through a post hook when any contact gets added to
+      either group or tag.
+    * And using scheduled jobs, which fetch the contact from the group and/or tag and create a user for each contact.
 
-    * And using Scheduled Jobs, which fetch the contact from Group and/or Tag, and 
-create a user for each contact.
+* Due to any reason the user is not created, we add an activity record of type
+`User Account Creation` with a `Failed` status. We retry up to four attempts after
+Contact gets removed from the group or tag itself without creating a user account.
 
-* Due to any reason the user is not created then we add an Activity record of type 
-`User Account Creation` with `Failed` status. We retry upto 4 attempt, there 
-after Contact gets removed from the Group/Tag itself without creating a user account.
-
-* If a user is created successfully then a new activity of type `User Account 
-Creation` is created with `Completed` Status.
+* If a user is created successfully, then a new activity of type `User Account Creation` is created with a `Completed` status.
 
