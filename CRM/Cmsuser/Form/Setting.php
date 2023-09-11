@@ -18,6 +18,7 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
     $this->assign('tokens', CRM_Utils_Token::formatTokensForDisplay($tokens));
 
     $this->add('advcheckbox', 'cmsuser_notify', ts('Notify User?'));
+    $this->add('advcheckbox', 'cmsuser_preferred_language', ts('Sync preferred language'));
     $this->add('advcheckbox', 'cmsuser_create_immediately', ts('Create New User Immediately?'));
     $this->add('advcheckbox', 'cmsuser_login_immediately', ts('Login User Immediately?'));
     $this->add('advcheckbox', 'cmsuser_allow_existing_user_login', ts('Allow existing User to auto login?'));

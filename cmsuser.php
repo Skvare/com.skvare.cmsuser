@@ -203,7 +203,7 @@ function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     $domainID = CRM_Core_Config::domainID();
     $settings = Civi::settings($domainID);
     $setDefaults = [];
-    $elementNames = ['cmsuser_pattern', 'cmsuser_notify', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
+    $elementNames = ['cmsuser_pattern', 'cmsuser_notify', 'cmsuser_preferred_language', 'cmsuser_group_create', 'cmsuser_group_history', 'cmsuser_group_reset',
       'cmsuser_tag_create', 'cmsuser_tag_history', 'cmsuser_tag_reset', 'cmsuser_create_immediately', 'cmsuser_cms_roles',
       'cmsuser_user_fields', 'cmsuser_login_immediately', 'cmsuser_allow_existing_user_login', 'cmsuser_block_roles_autologin'];
 
