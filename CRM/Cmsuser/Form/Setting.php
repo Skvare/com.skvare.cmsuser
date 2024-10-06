@@ -1,6 +1,7 @@
 <?php
 
 use CRM_Cmsuser_ExtensionUtil as E;
+use Drupal\user\Entity\Role;
 
 /**
  * Form controller class
