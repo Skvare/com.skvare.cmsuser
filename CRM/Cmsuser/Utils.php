@@ -545,4 +545,50 @@ class CRM_Cmsuser_Utils {
     return $hasRole;
   }
 
+  /**
+   * Delete user.
+   *
+   * @param int $uid
+   *   User ID.
+   * @param string $method
+   *   Action method.
+   */
+  public static function delete(int $uid, string $method = 'user_cancel_delete') {
+    if (CIVICRM_UF == 'Drupal8') {
+      $account = Drupal\user\Entity\User::load($uid);
+      if (!$account) {
+        return FALSE;
+      }
+      // Do not delete current user.
+      if ($account->id() == \Drupal::currentUser()->id()) {
+        return FALSE;
+      }
+      if ($method != 'user_cancel_delete') {
+        // Allow modules to add further sets to this batch.
+        \Drupal::moduleHandler()->invokeAll('user_cancel', [[], $account, $method]);
+      }
+      $account->delete();
+      return TRUE;
+    }
+    elseif (CIVICRM_UF == 'Drupal') {
+      global $user;
+      $account = user_load($uid);
+      $edit = [];
+      if (!$account) {
+        return FALSE;
+      }
+      // Do not delete current user.
+      if ($account->uid == $user->uid) {
+        return FALSE;
+      }
+
+      if ($method != 'user_cancel_delete') {
+        // Allow modules to add further sets to this batch.
+        module_invoke_all('user_cancel', $edit, $account, $method);
+      }
+      user_delete($account->uid);
+      return TRUE;
+    }
+  }
+
 }

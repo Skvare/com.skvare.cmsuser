@@ -117,3 +117,22 @@ function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     }
   }
 }
+
+/**
+ * Implements hook_civicrm_searchTasks().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_searchTasks/
+ *
+ * @param string $objectType
+ * @param array $tasks
+ * @return void
+ */
+function cmsuser_civicrm_searchTasks($objectType, &$tasks) {
+  if ($objectType === 'contact') {
+    $tasks['12121'] = [
+      'title' => ts('Delete users for contact'),
+      'class' => 'CRM_Cmsuser_Form_Task_Delete',
+      'result' => TRUE,
+    ];
+  }
+}
