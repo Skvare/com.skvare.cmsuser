@@ -42,6 +42,10 @@
     <p>{ts}An email will be sent to the new user account email notifying them of account creation. The new user also will be able to reset their password. Mail is sent by the CMS and can be configured in the CMS.{/ts}</p>
 {/htxt}
 
+{htxt id="id-cmsuser_preferred_language"}
+    <p>{ts}If this setting is enabled, then users created in the CMS will have their user language configured the same as with the contact's preferred language (D8+ only).{/ts}</p>
+{/htxt}
+
 {htxt id="id-cmsuser_login_immediately"}
     <p>{ts}If this setting is enabled along with 'Create New User Immediately' then users get created and also get auto logged in.{/ts}</p>
 {/htxt}

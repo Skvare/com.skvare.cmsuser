@@ -67,6 +67,24 @@ class CRM_Cmsuser_Utils {
     $account = \Drupal::entityTypeManager()->getStorage('user')->create();
     $account->setUsername($params['cms_name'])->setEmail($params[$mail]);
 
+    // Check for preferred language
+    if (array_key_exists('preferred_langcode', $params) && $params['preferred_langcode']) {
+      $languageList = \Drupal::languageManager()->getLanguages();
+      $listAvailable = [];
+      foreach ($languageList as $k => $language) {
+        $listAvailable[] = $language->getId();
+      }
+      // This is not a good approach: We just need the language string (ignoring the country) so we're going to split the locale selected.
+      // We're getting from `en_US` the string `en`
+      $langString = explode('_', $params['preferred_langcode']);
+      if (is_array($langString) && $langString[0] && in_array($langString[0], $listAvailable)) {
+        $account->set('preferred_langcode', $langString[0]);
+      }
+      else {
+        CRM_Core_Error::debug_var('cmsuser extension preferred_langcode not available in CMS', $langString[0]);
+      }
+    }
+
     $account->setPassword(FALSE);
     $account->enforceIsNew();
     $account->activate();
@@ -97,6 +115,11 @@ class CRM_Cmsuser_Utils {
     // Validate the user object
     $violations = $account->validate();
     if (count($violations)) {
+      foreach ($violations as $violation) {
+        CRM_Core_Error::debug_var('cmsuser extension validation',
+          $violation->getMessage());
+      }
+
       return FALSE;
     }
 
