@@ -75,10 +75,10 @@ function civicrm_api3_cmsuser_Reset($params) {
       // Generate and send the password reset email.
       $reset = retrieve_password($user_login);
       if (!is_wp_error($reset)) {
-        $mail = FALSE;
+        $mail = TRUE;
       }
       else {
-        $mail = TRUE;
+        $mail = FALSE;
       }
     }
     else {
