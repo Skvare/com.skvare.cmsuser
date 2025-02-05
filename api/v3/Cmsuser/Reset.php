@@ -30,7 +30,7 @@ function civicrm_api3_cmsuser_Reset($params) {
   $config = CRM_Core_Config::singleton();
   if (CIVICRM_UF == 'Drupal') {
     require_once DRUPAL_ROOT . '/modules/user/user.pages.inc';
-    // for Drupal 7
+    // For Drupal 7.
     global $language;
     $account = user_load($params['uf_id']);
     // Mail one time login URL and instructions using current language.
@@ -43,24 +43,43 @@ function civicrm_api3_cmsuser_Reset($params) {
   }
   elseif (CIVICRM_UF == 'Backdrop') {
     require_once BACKDROP_ROOT . '/core/modules/user/user.pages.inc';
-    // for Backdrop
+    // For Backdrop.
     global $language;
     $account = user_load($params['uf_id']);
     // Mail one time login URL and instructions using current language.
     if (!empty($account)) {
       $mail = _user_mail_notify('password_reset', $account, $language);
-      watchdog('user', 'Reset Password sent %name.', array('%name' => $params['uf_id']));
+      watchdog('user', 'Reset Password sent %name.', ['%name' => $params['uf_id']]);
     }
     else {
       return civicrm_api3_create_error('Failed to send reset email to CMS user account, user not exit', $params);
     }
   }
   elseif (CIVICRM_UF == 'Drupal8') {
-    // for Drupal 8
+    // For Drupal 8.
     $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
     $account = \Drupal\user\Entity\User::load($params['uf_id']);
     if (!empty($account)) {
       $mail = _user_mail_notify('password_reset', $account, $langcode);
+    }
+    else {
+      return civicrm_api3_create_error('Failed to send reset email to CMS user account, user not exit', $params);
+    }
+  }
+  elseif (CIVICRM_UF == 'WordPress') {
+    // For WordPress.
+    $account = CRM_Cmsuser_Utils::loadUser($params['uf_id']);
+    if (!empty($account)) {
+      $user_login = $account->user_login;
+      // $user_email = $account->user_email;
+      // Generate and send the password reset email.
+      $reset = retrieve_password($user_login);
+      if (!is_wp_error($reset)) {
+        $mail = FALSE;
+      }
+      else {
+        $mail = TRUE;
+      }
     }
     else {
       return civicrm_api3_create_error('Failed to send reset email to CMS user account, user not exit', $params);

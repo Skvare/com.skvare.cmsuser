@@ -254,7 +254,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
       }
       // if no error found OR user is already exist then remove contact from Tag / Group then
       // add same contact to another Tag / Group to
-      // mainain history of contact , that are created using scheduled job
+      // maintain history of contact, that are created using scheduled job.
       if (empty($api['is_error']) || (!empty($api['is_error']) && !empty($api['user_exist']))) {
         try {
           if ($isGroup) {
@@ -345,7 +345,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
     }
 
     // remove contacts from Group, so that on next iteration, same contact not get pulled
-    // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
+    // This block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
     // one go.
     if ($isGroup and !empty($groupContactDeleted)) {
       CRM_Contact_BAO_GroupContact::removeContactsFromGroup($groupContactDeleted, $setDefaults['cmsuser_group_create'], 'Deleted');
@@ -380,7 +380,6 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
  * @param bool $isGroup
  */
 function _cms_user_reset($setDefaults, $isGroup = TRUE) {
-  $domainID = CRM_Core_Config::domainID();
   $activities = _cmsuser_activities();
   // check this call for group or tag
   if ($isGroup) {
@@ -392,10 +391,6 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
 
   // if contact present, process it.
   if (!empty($contactX)) {
-    $config = CRM_Core_Config::singleton();
-    if (!$config->userSystem->is_drupal) {
-      return;
-    }
     $domainID = CRM_Core_Config::domainID();
     $groupContactDeleted = [];
     foreach ($contactX as $contactID) {
@@ -407,7 +402,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
           'domain_id' => $domainID,
           'return' => 'uf_id',
         ]);
-        // no uf id found then do nothging...
+        // no uf id found then do nothing...
         if (empty($uf_id)) {
           continue;
         }
@@ -438,9 +433,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
             ]);
           }
         }
-
         catch (CiviCRM_API3_Exception $e) {
-
         }
       }
 
@@ -472,8 +465,8 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
 
       }
     }
-    // remove contacts from Group, so that on next iteration, same contact not get pulled
-    // this block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
+    // Remove contacts from Group, so that on next iteration, same contact not get pulled.
+    // This block kept outside loop to avoid cache clear performance on every delete action. Passing all contacts in
     // one go.
     if ($isGroup and !empty($groupContactDeleted)) {
       CRM_Contact_BAO_GroupContact::removeContactsFromGroup($groupContactDeleted, $setDefaults['cmsuser_group_reset'], 'Deleted');
