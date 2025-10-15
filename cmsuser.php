@@ -107,8 +107,15 @@ function cmsuser_civicrm_post( $op, $objectName, $objectId, &$objectRef ) {
     if ($objectName == 'EntityTag' && $setDefaults['cmsuser_tag_create'] == $objectId) {
       $cmsUserID = _cms_user_create($setDefaults, FALSE, $objectRef['0'], TRUE);
     }
-    elseif ($objectName == 'GroupContact' && $setDefaults['cmsuser_group_create'] == $objectId) {
-      $cmsUserID = _cms_user_create($setDefaults, TRUE, $objectRef, TRUE);
+    elseif ($objectName == 'GroupContact') {
+      if (is_object($objectRef) && is_a($objectRef, 'CRM_Contact_BAO_GroupContact')
+        && $setDefaults['cmsuser_group_create'] == $objectRef->group_id
+      ) {
+        $cmsUserID = _cms_user_create($setDefaults, TRUE, [$objectRef->contact_id], TRUE);
+      }
+      else if (is_array($objectRef) && $setDefaults['cmsuser_group_create'] == $objectId) {
+        $cmsUserID = _cms_user_create($setDefaults, TRUE, $objectRef, TRUE);
+      }
     }
 
     if (!empty($setDefaults['cmsuser_login_immediately']) &&
