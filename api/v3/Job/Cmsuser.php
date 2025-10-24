@@ -22,7 +22,7 @@ function _civicrm_api3_job_Cmsuser_spec(&$spec) {
  *
  * @see civicrm_api3_create_success
  *
- * @throws API_Exception
+ * @throws CRM_Core_Exception
  */
 function civicrm_api3_job_Cmsuser($params) {
   $domainID = CRM_Core_Config::domainID();
@@ -183,7 +183,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
               'return' => 'email',
             ]);
           }
-          catch (CiviCRM_API3_Exception $e) {
+          catch (CRM_Core_Exception $e) {
             $api = [
               'is_error' => 1,
               'error_message' => $e->getMessage(),
@@ -245,7 +245,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
             ];
           }
         }
-        catch (CiviCRM_API3_Exception $e) {
+        catch (CRM_Core_Exception $e) {
           $api = [
             'is_error' => 1,
             'error_message' => $e->getMessage(),
@@ -284,7 +284,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
             ]);
           }
         }
-        catch (CiviCRM_API3_Exception $e) {
+        catch (CRM_Core_Exception $e) {
         }
       }
 
@@ -339,7 +339,7 @@ function _cms_user_create($setDefaults, $isGroup = TRUE,
           }
         }
       }
-      catch (CiviCRM_API3_Exception $exception) {
+      catch (CRM_Core_Exception $exception) {
         CRM_Core_Error::debug_var('exception', $exception->getMessage());
       }
     }
@@ -411,7 +411,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
         // call our custom api to reset user
         $api = civicrm_api3('Cmsuser', 'Reset', $resetParams);
       }
-      catch (CiviCRM_API3_Exception $e) {
+      catch (CRM_Core_Exception $e) {
         $api = [
           'is_error' => 1,
           'error_message' => $e->getMessage(),
@@ -433,7 +433,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
             ]);
           }
         }
-        catch (CiviCRM_API3_Exception $e) {
+        catch (CRM_Core_Exception $e) {
         }
       }
 
@@ -461,7 +461,7 @@ function _cms_user_reset($setDefaults, $isGroup = TRUE) {
           'details' => $activityDetails,
         ]);
       }
-      catch (CiviCRM_API3_Exception $exception) {
+      catch (CRM_Core_Exception $exception) {
 
       }
     }

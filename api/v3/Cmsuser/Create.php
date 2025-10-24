@@ -46,7 +46,7 @@ function _civicrm_api3_cmsuser_Create_spec(&$spec) {
  *
  * @see civicrm_api3_create_success
  *
- * @throws API_Exception
+ * @throws CRM_Core_Exception
  */
 function civicrm_api3_cmsuser_Create($params) {
   civicrm_api3_verify_mandatory($params, NULL, ['cms_name', 'email']);
@@ -58,7 +58,7 @@ function civicrm_api3_cmsuser_Create($params) {
 
       return civicrm_api3_create_error('CMS user account already exists for this contact.', $user);
     }
-    catch (CiviCRM_API3_Exception $e) {
+    catch (CRM_Core_Exception $e) {
       // user account doesn't exist, just fall through to rest of code
     }
   }
