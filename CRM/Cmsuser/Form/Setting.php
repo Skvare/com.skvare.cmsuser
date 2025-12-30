@@ -1,6 +1,7 @@
 <?php
 
 use CRM_Cmsuser_ExtensionUtil as E;
+use Drupal\user\Entity\Role;
 
 /**
  * Form controller class
@@ -23,7 +24,12 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
     $this->add('advcheckbox', 'cmsuser_login_immediately', ts('Login User Immediately?'));
     $this->add('advcheckbox', 'cmsuser_allow_existing_user_login', ts('Allow existing User to auto login?'));
     if (CIVICRM_UF == 'Drupal8') {
-      $user_role_names = user_role_names(TRUE);
+    // Borrowed from https://www.drupal.org/files/issues/2024-01-05/3412456.patch
+    $user_roles = Role::loadMultiple();
+    $user_role_names = [];
+      foreach ($user_roles as $role) {
+       $user_role_names[$role->id()] = $role->label();
+      }      
       unset($user_role_names['authenticated']);
       $this->add('select', 'cmsuser_cms_roles', ts('Assign Role to Users'),
         $user_role_names, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
