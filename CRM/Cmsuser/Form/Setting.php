@@ -105,7 +105,7 @@ class CRM_Cmsuser_Form_Setting extends CRM_Core_Form {
         $groupList, FALSE, ['class' => 'crm-select2 huge', 'multiple' => 1]);
     }
 
-    $groups = ['' => '-- select --'] + CRM_Core_PseudoConstant::nestedGroup();
+    $groups = ['' => '-- select --'] + CRM_Core_PseudoConstant::nestedGroup(TRUE, NULL, TRUE, "plain");
     $tags = ['' => '-- select --'] + CRM_Core_PseudoConstant::get('CRM_Core_DAO_EntityTag', 'tag_id', ['onlyActive' => FALSE]);
 
     $this->add('select', 'cmsuser_group_create', ts('Create CMS User for Group contact'), $groups);
