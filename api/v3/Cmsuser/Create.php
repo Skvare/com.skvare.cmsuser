@@ -9,7 +9,7 @@ use CRM_Cmsuser_ExtensionUtil as E;
  *
  * @see https://docs.civicrm.org/dev/en/latest/framework/api-architecture/
  */
-function _civicrm_api3_cmsuser_Create_spec(&$spec) {
+function _civicrm_api3_cmsuser_Create_spec(&params) {
   $params['cms_name'] = [
     'api.required' => 1,
     'title' => 'CMS Username',
