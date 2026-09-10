@@ -21,6 +21,9 @@ class CRM_Cmsuser_Utils {
    */
   public static function create(&$params, $mail) {
     $ufID = FALSE;
+    if (isset($params['cms_name'])) {
+      $params['cms_name'] = self::sanitizeUsername($params['cms_name']);
+    }
     if (CIVICRM_UF == 'Drupal8') {
       $ufID = self::create_d8($params, $mail);
     }
@@ -48,6 +51,40 @@ class CRM_Cmsuser_Utils {
     }
 
     return $ufID;
+  }
+
+  /**
+   * Sanitize a string (typically built from a contact's first/last name)
+   * so it is safe to use as a CMS username.
+   *
+   * Accented/special characters (e.g. é, ñ, a 'c' with a cedilla) are
+   * transliterated to their closest plain ASCII equivalent, and any
+   * character that still isn't safe for a username (e.g. an apostrophe,
+   * as in the last name "O'Brian") is stripped out.
+   *
+   * @param string $name
+   *
+   * @return string
+   */
+  public static function sanitizeUsername($name) {
+    $name = (string) $name;
+
+    // Transliterate accented/diacritic characters to their closest ASCII
+    // equivalent (e.g. "François" => "Francois", "Ç" => "C").
+    $transliterated = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
+    if ($transliterated !== FALSE && trim($transliterated) !== '') {
+      $name = $transliterated;
+    }
+
+    // Strip out anything that isn't a letter, number, space, or one of the
+    // common username separators. This removes apostrophes and any other
+    // characters left over after transliteration.
+    $name = preg_replace('/[^a-zA-Z0-9 \-_.@]/', '', $name);
+
+    // Collapse whitespace left behind by the character removal above.
+    $name = trim(preg_replace('/\s+/', ' ', $name));
+
+    return $name;
   }
 
   /**
