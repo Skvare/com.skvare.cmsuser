@@ -46,7 +46,7 @@ class api_v3_Cmsuser_ResetTest extends \PHPUnit\Framework\TestCase implements He
    * Note how the function name begins with the word "test".
    */
   public function testApiExample() {
-    $result = civicrm_api3('Cmsuser', 'Reset', array('magicword' => 'sesame'));
+    $result = civicrm_api3('Cmsuser', 'Reset', ['magicword' => 'sesame']);
     $this->assertEquals('Twelve', $result['values'][12]['name']);
   }
 
