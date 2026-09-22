@@ -46,7 +46,7 @@ class api_v3_Cmsuser_CreateTest extends \PHPUnit\Framework\TestCase implements H
    * Note how the function name begins with the word "test".
    */
   public function testApiExample() {
-    $result = civicrm_api3('Cmsuser', 'Create', array('magicword' => 'sesame'));
+    $result = civicrm_api3('Cmsuser', 'Create', ['magicword' => 'sesame']);
     $this->assertEquals('Twelve', $result['values'][12]['name']);
   }
 
